@@ -15,31 +15,36 @@ direction_dict = {
     "southwest": (-STEP_SIZE, STEP_SIZE)
 }
 
+class GamePiece:
 
-class King:
+    piece_name = None   #used for toString
+    _white_image_path = None    #used to initialize image
+    _black_image_path = None
 
     def __init__(self, team, x, y):
-       self.x = x*STEP_SIZE
-       self.y = y*STEP_SIZE
-       self.team = team
-       if(team == "white"):
-           self._image_surf = pygame.image.load("sprites/white_king_20x20.png").convert()
-       elif(team == "black"):
-           self._image_surf = pygame.image.load("sprites/black_king_20x20.png").convert()
+        #store move coordinates in unit [SQpixels]
+        self.x = x*STEP_SIZE
+        self.y = y*STEP_SIZE
+
+        self.team = team
+        if(team == "white"):
+            self._image_surf = pygame.image.load(self._white_image_path).convert()
+        elif(team == "black"):
+            self._image_surf = pygame.image.load(self._black_image_path).convert()
 
     def draw(self, surface):
         surface.blit(self._image_surf,(self.x,self.y))
 
-    def movesInDirection(self, direction, map, pieces, limit=100):
+    def movesInDirection(self, direction, map, pieces, limit=None):
         moves = []
         inc_i, inc_j = direction_dict[direction]
         i = inc_i
         j = inc_j
         count = 0
         break_out = False
-        while(count < limit and not map.isWaterAt(int((self.x+i)/STEP_SIZE), int((self.y+j)/STEP_SIZE))):
+        while((limit == None or count < limit) and not map.isWaterAt(self.x+i, self.y+j)):
             for piece in pieces:
-                if piece.get_pos() == (self.x+i, self.y+j):
+                if piece.getSQpixels() == (self.x+i, self.y+j):
                     break_out = True
             if(break_out): break
             moves.append((self.x+i, self.y+j))
@@ -51,7 +56,28 @@ class King:
 
     def avaliableMoves(self, pieces, map):
         moves = []
+        #should create unique avaliableMoves() for each piece
+        return moves
 
+    def moveTo(self, coord):
+        #takes coords in units [SQpixels]
+        self.x = coord[0]
+        self.y = coord[1]
+
+    def getSQpixels(self):
+        return (self.x, self.y)
+
+    def toString(self):
+        return self.piece_name+"@"+str(self.getSQpixels())
+
+class King(GamePiece):
+
+    piece_name = "King"
+    _white_image_path = "sprites/white_king_20x20.png"
+    _black_image_path = "sprites/black_king_20x20.png"
+
+    def avaliableMoves(self, pieces, map):
+        moves = []
         moves.extend(self.movesInDirection("east", map, pieces, 1))
         moves.extend(self.movesInDirection("west", map, pieces, 1))
         moves.extend(self.movesInDirection("north", map, pieces, 1))
@@ -60,53 +86,16 @@ class King:
         moves.extend(self.movesInDirection("northwest", map, pieces, 1))
         moves.extend(self.movesInDirection("southeast", map, pieces, 1))
         moves.extend(self.movesInDirection("southwest", map, pieces, 1))
-
         return moves
 
-    def moveTo(self, coord):
-        self.x = coord[0]
-        self.y = coord[1]
+class Queen(GamePiece):
 
-    def get_pos(self):
-        return (self.x, self.y)
-
-    def toString(self):
-        return "King@"+str(self.get_pos())
-
-class Queen:
-
-    def __init__(self, team, x, y):
-       self.x = x*STEP_SIZE
-       self.y = y*STEP_SIZE
-       self.team = team
-       if(team == "white"):
-           self._image_surf = pygame.image.load("sprites/white_queen_20x20.png").convert()
-       elif(team == "black"):
-           self._image_surf = pygame.image.load("sprites/black_queen_20x20.png").convert()
-
-    def draw(self, surface):
-        surface.blit(self._image_surf,(self.x,self.y))
-
-    def movesInDirection(self, direction, map, pieces):
-        moves = []
-        inc_i, inc_j = direction_dict[direction]
-        i = inc_i
-        j = inc_j
-        break_out = False
-        while(not map.isWaterAt(int((self.x+i)/STEP_SIZE), int((self.y+j)/STEP_SIZE))):
-            for piece in pieces:
-                if piece.get_pos() == (self.x+i, self.y+j):
-                    break_out = True
-            if(break_out): break
-            moves.append((self.x+i, self.y+j))
-            i += inc_i
-            j += inc_j
-
-        return moves
+    piece_name = "Queen"
+    _white_image_path = "sprites/white_queen_20x20.png"
+    _black_image_path = "sprites/black_queen_20x20.png"
 
     def avaliableMoves(self, pieces, map):
         moves = []
-
         moves.extend(self.movesInDirection("east", map, pieces))
         moves.extend(self.movesInDirection("west", map, pieces))
         moves.extend(self.movesInDirection("north", map, pieces))
@@ -115,201 +104,90 @@ class Queen:
         moves.extend(self.movesInDirection("northwest", map, pieces))
         moves.extend(self.movesInDirection("southeast", map, pieces))
         moves.extend(self.movesInDirection("southwest", map, pieces))
-
         return moves
 
-    def moveTo(self, coord):
-        self.x = coord[0]
-        self.y = coord[1]
+class Rook(GamePiece):
 
-    def get_pos(self):
-        return (self.x, self.y)
-
-    def toString(self):
-        return "Queen@"+str(self.get_pos())
-
-class Rook:
-
-    def __init__(self, team, x, y):
-       self.x = x*STEP_SIZE
-       self.y = y*STEP_SIZE
-       self.team = team
-       if(team == "white"):
-           self._image_surf = pygame.image.load("sprites/white_rook_20x20.png").convert()
-       elif(team == "black"):
-           self._image_surf = pygame.image.load("sprites/black_rook_20x20.png").convert()
-
-    def draw(self, surface):
-        surface.blit(self._image_surf,(self.x,self.y))
-
-    def movesInDirection(self, direction, map, pieces):
-        moves = []
-        inc_i, inc_j = direction_dict[direction]
-        i = inc_i
-        j = inc_j
-        break_out = False
-        while(not map.isWaterAt(int((self.x+i)/STEP_SIZE), int((self.y+j)/STEP_SIZE))):
-            for piece in pieces:
-                if piece.get_pos() == (self.x+i, self.y+j):
-                    break_out = True
-            if(break_out): break
-            moves.append((self.x+i, self.y+j))
-            i += inc_i
-            j += inc_j
-
-        return moves
-
+    piece_name = "Rook"
+    _white_image_path = "sprites/white_rook_20x20.png"
+    _black_image_path = "sprites/black_rook_20x20.png"
 
     def avaliableMoves(self, pieces, map):
         moves = []
-
         moves.extend(self.movesInDirection("east", map, pieces))
         moves.extend(self.movesInDirection("west", map, pieces))
         moves.extend(self.movesInDirection("north", map, pieces))
         moves.extend(self.movesInDirection("south", map, pieces))
-
         return moves
 
-    def moveTo(self, coord):
-        self.x = coord[0]
-        self.y = coord[1]
+class Knight(GamePiece):
 
-    def get_pos(self):
-        return (self.x, self.y)
+    piece_name = "Knight"
+    _white_image_path = "sprites/white_knight_20x20.png"
+    _black_image_path = "sprites/black_knight_20x20.png"
 
-    def toString(self):
-        return "Rook@"+str(self.get_pos())
-
-class Knight:
-
-    def __init__(self, team, x, y):
-       self.x = x*STEP_SIZE
-       self.y = y*STEP_SIZE
-       self.team = team
-       if(team == "white"):
-           self._image_surf = pygame.image.load("sprites/white_knight_20x20.png").convert()
-       elif(team == "black"):
-           self._image_surf = pygame.image.load("sprites/black_knight_20x20.png").convert()
-
-    def draw(self, surface):
-        surface.blit(self._image_surf,(self.x,self.y))
-
-    def avaliableMoves(self, pieces, map):
-        s = STEP_SIZE
-        ss = STEP_SIZE*2
-
-        moves = []
-        moves.append((self.x-s, self.y+ss))
-        moves.append((self.x+s, self.y+ss))
-
-        moves.append((self.x-s, self.y-ss))
-        moves.append((self.x+s, self.y-ss))
-
-        moves.append((self.x+ss, self.y-s))
-        moves.append((self.x+ss, self.y+s))
-
-        moves.append((self.x-ss, self.y-s))
-        moves.append((self.x-ss, self.y+s))
-        return moves
-
-    def moveTo(self, coord):
-        self.x = coord[0]
-        self.y = coord[1]
-
-    def get_pos(self):
-        return (self.x, self.y)
-
-    def toString(self):
-        return "Knight@"+str(self.get_pos())
-
-class Bishop:
-
-    def __init__(self, team, x, y):
-       self.x = x*STEP_SIZE
-       self.y = y*STEP_SIZE
-       self.team = team
-       if(team == "white"):
-           self._image_surf = pygame.image.load("sprites/white_bishop_20x20.png").convert()
-       elif(team == "black"):
-           self._image_surf = pygame.image.load("sprites/black_bishop_20x20.png").convert()
-
-    def draw(self, surface):
-        surface.blit(self._image_surf,(self.x,self.y))
-
-    def movesInDirection(self, direction, map, pieces):
-        moves = []
-        inc_i, inc_j = direction_dict[direction]
-        i = inc_i
-        j = inc_j
-        break_out = False
-        while(not map.isWaterAt(int((self.x+i)/STEP_SIZE), int((self.y+j)/STEP_SIZE))):
-            for piece in pieces:
-                if piece.get_pos() == (self.x+i, self.y+j):
-                    break_out = True
-            if(break_out): break
-            moves.append((self.x+i, self.y+j))
-            i += inc_i
-            j += inc_j
-
-        return moves
-
-
-    def avaliableMoves(self, pieces, map):
-        moves = []
-
-        moves.extend(self.movesInDirection("northeast", map, pieces))
-        moves.extend(self.movesInDirection("northwest", map, pieces))
-        moves.extend(self.movesInDirection("southeast", map, pieces))
-        moves.extend(self.movesInDirection("southwest", map, pieces))
-
-        return moves
-
-    def moveTo(self, coord):
-        self.x = coord[0]
-        self.y = coord[1]
-
-    def get_pos(self):
-        return (self.x, self.y)
-
-    def toString(self):
-        return "Bishop@"+str(self.get_pos())
-
-class Pawn:
-
-    def __init__(self, team, x, y):
-       self.x = x*STEP_SIZE
-       self.y = y*STEP_SIZE
-       self.team = team
-       if(team == "white"):
-           self._image_surf = pygame.image.load("sprites/white_pawn_20x20.png").convert()
-       elif(team == "black"):
-           self._image_surf = pygame.image.load("sprites/black_pawn_20x20.png").convert()
-
-    def draw(self, surface):
-        surface.blit(self._image_surf,(self.x,self.y))
+    direction_dict = {
+        "left-right": (STEP_SIZE*2, STEP_SIZE),
+        "up-down": (STEP_SIZE, STEP_SIZE*2),
+    }
 
     def movesInDirection(self, direction, map, pieces, limit=100):
         moves = []
-        inc_i, inc_j = direction_dict[direction]
-        i = inc_i
-        j = inc_j
-        count = 0
-        break_out = False
-        while(count < limit and not map.isWaterAt(int((self.x+i)/STEP_SIZE), int((self.y+j)/STEP_SIZE))):
-            for piece in pieces:
-                if piece.get_pos() == (self.x+i, self.y+j):
-                    break_out = True
-            if(break_out): break
-            moves.append((self.x+i, self.y+j))
-            i += inc_i
-            j += inc_j
-            count += 1
+        i, j = self.direction_dict[direction]
+
+        hit1 = map.isWaterAt(self.x+i, self.y+j)
+        hit2 = map.isWaterAt(self.x+i, self.y-j)
+        hit3 = map.isWaterAt(self.x-i, self.y+j)
+        hit4 = map.isWaterAt(self.x-i, self.y-j)
+        for piece in pieces:
+            if not hit1 and piece.getSQpixels() == (self.x+i, self.y+j):
+                hit1 = True
+            if not hit2 and piece.getSQpixels() == (self.x+i, self.y-j):
+                hit2 = True
+            if not hit3 and piece.getSQpixels() == (self.x-i, self.y+j):
+                hit3 = True
+            if not hit4 and piece.getSQpixels() == (self.x-i, self.y-j):
+                hit4 = True
+
+            if hit1 and hit2 and hit3 and hit4:
+                break
+
+        if(not hit1): moves.append((self.x+i, self.y+j))
+        if(not hit2): moves.append((self.x+i, self.y-j))
+        if(not hit3): moves.append((self.x-i, self.y+j))
+        if(not hit4): moves.append((self.x-i, self.y-j))
 
         return moves
 
+
     def avaliableMoves(self, pieces, map):
         moves = []
+        moves.extend(self.movesInDirection("left-right", map, pieces))
+        moves.extend(self.movesInDirection("up-down", map, pieces))
+        return moves
 
+class Bishop(GamePiece):
+
+    piece_name = "Bishop"
+    _white_image_path = "sprites/white_bishop_20x20.png"
+    _black_image_path = "sprites/black_bishop_20x20.png"
+
+    def avaliableMoves(self, pieces, map):
+        moves = []
+        moves.extend(self.movesInDirection("northeast", map, pieces))
+        moves.extend(self.movesInDirection("northwest", map, pieces))
+        moves.extend(self.movesInDirection("southeast", map, pieces))
+        moves.extend(self.movesInDirection("southwest", map, pieces))
+        return moves
+
+class Pawn(GamePiece):
+
+    piece_name = "Pawn"
+    _white_image_path = "sprites/white_pawn_20x20.png"
+    _black_image_path = "sprites/black_pawn_20x20.png"
+
+    def avaliableMoves(self, pieces, map):
+        moves = []
         moves.extend(self.movesInDirection("east", map, pieces, 2))
         moves.extend(self.movesInDirection("west", map, pieces, 2))
         moves.extend(self.movesInDirection("north", map, pieces, 2))
@@ -318,15 +196,4 @@ class Pawn:
         moves.extend(self.movesInDirection("northwest", map, pieces, 2))
         moves.extend(self.movesInDirection("southeast", map, pieces, 2))
         moves.extend(self.movesInDirection("southwest", map, pieces, 2))
-
         return moves
-
-    def moveTo(self, coord):
-        self.x = coord[0]
-        self.y = coord[1]
-
-    def get_pos(self):
-        return (self.x, self.y)
-
-    def toString(self):
-        return "Pawn@"+str(self.get_pos())

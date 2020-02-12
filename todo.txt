@@ -1,11 +1,8 @@
 TODO
 
--comment some god damn code
--build inheritance architecture for pieces
--make decision on pawn moving towards castle
--implement knights collision
--sort out coordinate system
+-implement knights WATER collision
+-create game set up
 -enable capturing
 -enable resource collection
 -create turn prompts
--create game set up
+-make decision on pawn moving towards castle

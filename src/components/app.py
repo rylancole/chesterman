@@ -103,29 +103,36 @@ class App:
 
                 #handle mouse click
                 if event.type == pygame.MOUSEBUTTONUP:
+                    #get mouse position in unit [pixels]
                     pos = pygame.mouse.get_pos()
-                    #round pixels to square's top left corner
+
+                    #convert mouse position into unit [SQpixels]
                     x = pos[0] - pos[0]%STEP_SIZE
                     y = pos[1] - pos[1]%STEP_SIZE
+
                     #set break conditions
                     in_moves = False
                     in_pieces = False
 
                     #check to see if a move was clicked
                     for move in self.moves:
-                        if move.get() == (x, y):
-                            print(self.selected_piece.toString(), "->", move.get())
-                            self.selected_piece.moveTo(move.get())
+                        #compare move sprite location to mouse click
+                        if move.getSQpixels() == (x, y):
+                            print(self.selected_piece.toString(), "->", move.getSQpixels())
+                            #move selected piece to this move if clicked
+                            self.selected_piece.moveTo(move.getSQpixels())
                             self.moves = []
                             in_moves = True
 
                     #check to see if a piece was clicked
                     if(not in_moves):
                         for piece in self.pieces:
-                            if piece.get_pos() == (x, y):
+                            if piece.getSQpixels() == (x, y):
+                                #choose piece as selected if clicked
                                 self.selected_piece = piece
                                 print(piece.toString())
                                 self.moves = []
+                                #display legal moves of selected piece
                                 for move in piece.avaliableMoves(self.pieces, self.map):
                                     self.moves.append(LegalMove(move))
                                 in_pieces = True

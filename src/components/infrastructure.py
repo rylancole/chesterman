@@ -12,6 +12,14 @@ class Map:
         pass
 
     def decompress(self, f):
+        '''
+        Convert text file encoded to represent map
+        w = water
+        s = stone
+        f = field
+        c = crop
+        e = empty
+        '''
         i = 0
         for line in f:
             self.matrix.append([])
@@ -21,11 +29,20 @@ class Map:
             i += 1
 
     def get(self, x, y):
+        '''
+        Return character in at (x, y)
+        '''
         return self.matrix[y][x]
 
     def isWaterAt(self, x, y):
+        '''
+        Return true for collision with water or end of map
+        Takes in coords in units [SQpixels]
+        '''
+        x = int(x/STEP_SIZE) #convert coords to units [Squares]
+        y = int(y/STEP_SIZE)
         if(y >= len(self.matrix)): return True
-        if(x >= len(self.matrix[y])): return True 
+        if(x >= len(self.matrix[y])): return True
         return self.matrix[y][x] == "w"
 
     def toString(self):
@@ -39,10 +56,13 @@ class Map:
 
 class Castle:
 
+    piece_name = "Castle"
+    _image_path = "sprites/_castle_80x80.png"
+
     def __init__(self, x, y):
        self.x = x*STEP_SIZE
        self.y = y*STEP_SIZE
-       self._image_surf = pygame.image.load("sprites/_castle_80x80.png").convert()
+       self._image_surf = pygame.image.load(self._image_path).convert()
 
     def draw(self, surface):
         surface.blit(self._image_surf,(self.x,self.y))
@@ -51,4 +71,4 @@ class Castle:
         return (self.x, self.y)
 
     def toString(self):
-        return "Castle@"+str(self.get_pos())
+        return self.piece_name+"@"+str(self.get_pos())
