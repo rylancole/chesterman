@@ -1,8 +1,8 @@
 TODO
 
--implement knights WATER collision
--create game set up
--enable capturing
--enable resource collection
+
 -create turn prompts
--make decision on pawn moving towards castle
+-enable resource collection
+-improve initial game start up
+-enable point collection
+-enable resource use

@@ -20,6 +20,7 @@ class GamePiece:
     piece_name = None   #used for toString
     _white_image_path = None    #used to initialize image
     _black_image_path = None
+    captures = []
 
     def __init__(self, team, x, y):
         #store move coordinates in unit [SQpixels]
@@ -45,6 +46,7 @@ class GamePiece:
         while((limit == None or count < limit) and not map.isWaterAt(self.x+i, self.y+j)):
             for piece in pieces:
                 if piece.getSQpixels() == (self.x+i, self.y+j):
+                    if(piece.team != self.team): self.captures.append(piece)
                     break_out = True
             if(break_out): break
             moves.append((self.x+i, self.y+j))
@@ -56,8 +58,9 @@ class GamePiece:
 
     def avaliableMoves(self, pieces, map):
         moves = []
+        self.captures = []
         #should create unique avaliableMoves() for each piece
-        return moves
+        return moves, self.captures
 
     def moveTo(self, coord):
         #takes coords in units [SQpixels]
@@ -67,6 +70,15 @@ class GamePiece:
     def getSQpixels(self):
         return (self.x, self.y)
 
+    def getSquare(self):
+        return (int(self.x/STEP_SIZE), int(self.y/STEP_SIZE))
+
+    def getKind(self):
+        return self.piece_name
+
+    def getTeam(self):
+        return self.team
+
     def toString(self):
         return self.piece_name+"@"+str(self.getSQpixels())
 
@@ -75,9 +87,11 @@ class King(GamePiece):
     piece_name = "King"
     _white_image_path = "sprites/white_king_20x20.png"
     _black_image_path = "sprites/black_king_20x20.png"
+    captures = []
 
     def avaliableMoves(self, pieces, map):
         moves = []
+        self.captures = []
         moves.extend(self.movesInDirection("east", map, pieces, 1))
         moves.extend(self.movesInDirection("west", map, pieces, 1))
         moves.extend(self.movesInDirection("north", map, pieces, 1))
@@ -86,16 +100,18 @@ class King(GamePiece):
         moves.extend(self.movesInDirection("northwest", map, pieces, 1))
         moves.extend(self.movesInDirection("southeast", map, pieces, 1))
         moves.extend(self.movesInDirection("southwest", map, pieces, 1))
-        return moves
+        return moves, self.captures
 
 class Queen(GamePiece):
 
     piece_name = "Queen"
     _white_image_path = "sprites/white_queen_20x20.png"
     _black_image_path = "sprites/black_queen_20x20.png"
+    captures = []
 
     def avaliableMoves(self, pieces, map):
         moves = []
+        self.captures = []
         moves.extend(self.movesInDirection("east", map, pieces))
         moves.extend(self.movesInDirection("west", map, pieces))
         moves.extend(self.movesInDirection("north", map, pieces))
@@ -104,27 +120,30 @@ class Queen(GamePiece):
         moves.extend(self.movesInDirection("northwest", map, pieces))
         moves.extend(self.movesInDirection("southeast", map, pieces))
         moves.extend(self.movesInDirection("southwest", map, pieces))
-        return moves
+        return moves, self.captures
 
 class Rook(GamePiece):
 
     piece_name = "Rook"
     _white_image_path = "sprites/white_rook_20x20.png"
     _black_image_path = "sprites/black_rook_20x20.png"
+    captures = []
 
     def avaliableMoves(self, pieces, map):
         moves = []
+        self.captures = []
         moves.extend(self.movesInDirection("east", map, pieces))
         moves.extend(self.movesInDirection("west", map, pieces))
         moves.extend(self.movesInDirection("north", map, pieces))
         moves.extend(self.movesInDirection("south", map, pieces))
-        return moves
+        return moves, self.captures
 
 class Knight(GamePiece):
 
     piece_name = "Knight"
     _white_image_path = "sprites/white_knight_20x20.png"
     _black_image_path = "sprites/black_knight_20x20.png"
+    captures = []
 
     direction_dict = {
         "left-right": (STEP_SIZE*2, STEP_SIZE),
@@ -141,12 +160,16 @@ class Knight(GamePiece):
         hit4 = map.isWaterAt(self.x-i, self.y-j)
         for piece in pieces:
             if not hit1 and piece.getSQpixels() == (self.x+i, self.y+j):
+                if(piece.team != self.team): self.captures.append(piece)
                 hit1 = True
-            if not hit2 and piece.getSQpixels() == (self.x+i, self.y-j):
+            elif not hit2 and piece.getSQpixels() == (self.x+i, self.y-j):
+                if(piece.team != self.team): self.captures.append(piece)
                 hit2 = True
-            if not hit3 and piece.getSQpixels() == (self.x-i, self.y+j):
+            elif not hit3 and piece.getSQpixels() == (self.x-i, self.y+j):
+                if(piece.team != self.team): self.captures.append(piece)
                 hit3 = True
-            if not hit4 and piece.getSQpixels() == (self.x-i, self.y-j):
+            elif not hit4 and piece.getSQpixels() == (self.x-i, self.y-j):
+                if(piece.team != self.team): self.captures.append(piece)
                 hit4 = True
 
             if hit1 and hit2 and hit3 and hit4:
@@ -162,32 +185,37 @@ class Knight(GamePiece):
 
     def avaliableMoves(self, pieces, map):
         moves = []
+        self.captures = []
         moves.extend(self.movesInDirection("left-right", map, pieces))
         moves.extend(self.movesInDirection("up-down", map, pieces))
-        return moves
+        return moves, self.captures
 
 class Bishop(GamePiece):
 
     piece_name = "Bishop"
     _white_image_path = "sprites/white_bishop_20x20.png"
     _black_image_path = "sprites/black_bishop_20x20.png"
+    captures = []
 
     def avaliableMoves(self, pieces, map):
         moves = []
+        self.captures = []
         moves.extend(self.movesInDirection("northeast", map, pieces))
         moves.extend(self.movesInDirection("northwest", map, pieces))
         moves.extend(self.movesInDirection("southeast", map, pieces))
         moves.extend(self.movesInDirection("southwest", map, pieces))
-        return moves
+        return moves, self.captures
 
 class Pawn(GamePiece):
 
     piece_name = "Pawn"
     _white_image_path = "sprites/white_pawn_20x20.png"
     _black_image_path = "sprites/black_pawn_20x20.png"
+    captures = []
 
     def avaliableMoves(self, pieces, map):
         moves = []
+        self.captures = []
         moves.extend(self.movesInDirection("east", map, pieces, 2))
         moves.extend(self.movesInDirection("west", map, pieces, 2))
         moves.extend(self.movesInDirection("north", map, pieces, 2))
@@ -196,4 +224,4 @@ class Pawn(GamePiece):
         moves.extend(self.movesInDirection("northwest", map, pieces, 2))
         moves.extend(self.movesInDirection("southeast", map, pieces, 2))
         moves.extend(self.movesInDirection("southwest", map, pieces, 2))
-        return moves
+        return moves, self.captures

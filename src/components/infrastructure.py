@@ -19,6 +19,7 @@ class Map:
         f = field
         c = crop
         e = empty
+        t = castle
         '''
         i = 0
         for line in f:
@@ -33,6 +34,25 @@ class Map:
         Return character in at (x, y)
         '''
         return self.matrix[y][x]
+
+    def putCastle(self, x, y):
+        '''
+        Initialiaze 4x4 castle at point in units [Squares]
+        '''
+        for i in range(x, x+4):
+            for j in range(y, y+4):
+                self.matrix[j][i] = "t"
+
+    def isCastleAt(self, x, y):
+        '''
+        Return true if square on castle grounds
+        Takes in coords in units [Squares]
+        '''
+
+        if(self.isWaterAt(x*STEP_SIZE, y*STEP_SIZE)):
+            return False
+        else:
+            return self.matrix[y][x] == "t"
 
     def isWaterAt(self, x, y):
         '''
