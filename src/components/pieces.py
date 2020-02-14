@@ -27,6 +27,7 @@ class GamePiece:
         self.x = x*STEP_SIZE
         self.y = y*STEP_SIZE
 
+        self.multiplier = 1
         self.team = team
         if(team == "white"):
             self._image_surf = pygame.image.load(self._white_image_path).convert()
@@ -36,7 +37,7 @@ class GamePiece:
     def draw(self, surface):
         surface.blit(self._image_surf,(self.x,self.y))
 
-    def movesInDirection(self, direction, map, pieces, limit=None):
+    def movesInDirection(self, direction, map, pieces, limit=None, allowCapture=True):
         moves = []
         inc_i, inc_j = direction_dict[direction]
         i = inc_i
@@ -46,7 +47,7 @@ class GamePiece:
         while((limit == None or count < limit) and not map.isWaterAt(self.x+i, self.y+j)):
             for piece in pieces:
                 if piece.getSQpixels() == (self.x+i, self.y+j):
-                    if(piece.team != self.team): self.captures.append(piece)
+                    if(allowCapture and piece.team != self.team): self.captures.append(piece)
                     break_out = True
             if(break_out): break
             moves.append((self.x+i, self.y+j))
@@ -78,6 +79,12 @@ class GamePiece:
 
     def getTeam(self):
         return self.team
+
+    def getMultiplier(self):
+        return self.multiplier
+
+    def incMultiplier(self):
+        self.multiplier += 1
 
     def toString(self):
         return self.piece_name+"@"+str(self.getSQpixels())
@@ -150,7 +157,7 @@ class Knight(GamePiece):
         "up-down": (STEP_SIZE, STEP_SIZE*2),
     }
 
-    def movesInDirection(self, direction, map, pieces, limit=100):
+    def movesInDirection(self, direction, map, pieces, limit=None):
         moves = []
         i, j = self.direction_dict[direction]
 
@@ -216,10 +223,10 @@ class Pawn(GamePiece):
     def avaliableMoves(self, pieces, map):
         moves = []
         self.captures = []
-        moves.extend(self.movesInDirection("east", map, pieces, 2))
-        moves.extend(self.movesInDirection("west", map, pieces, 2))
-        moves.extend(self.movesInDirection("north", map, pieces, 2))
-        moves.extend(self.movesInDirection("south", map, pieces, 2))
+        moves.extend(self.movesInDirection("east", map, pieces, 2, False))
+        moves.extend(self.movesInDirection("west", map, pieces, 2, False))
+        moves.extend(self.movesInDirection("north", map, pieces, 2, False))
+        moves.extend(self.movesInDirection("south", map, pieces, 2, False))
         moves.extend(self.movesInDirection("northeast", map, pieces, 2))
         moves.extend(self.movesInDirection("northwest", map, pieces, 2))
         moves.extend(self.movesInDirection("southeast", map, pieces, 2))

@@ -23,7 +23,15 @@ class LegalCapture:
         "Rook": "sprites/red_rook_20x20.png",
         "Knight": "sprites/red_knight_20x20.png",
         "Bishop": "sprites/red_bishop_20x20.png",
-        "Pawn": "sprites/red_pawn_20x20.png",
+        "Pawn": "sprites/red_pawn_20x20.png"
+    }
+
+    value_dict = {
+        "Queen": 9,
+        "Rook": 5,
+        "Knight": 3,
+        "Bishop": 3,
+        "Pawn": 1
     }
 
     def __init__(self, piece):
@@ -33,11 +41,16 @@ class LegalCapture:
         self.kind = piece.getKind()
         self._image_surf = pygame.image.load(self.image_dict[self.kind]).convert()
 
+    def getValue(self):
+        return self.value_dict[self.kind]
+
     def getPieceObj(self):
         return self.piece_obj
 
-    def capturedBy(self, piece):
-        print("Capture")
+    def capturedBy(self, piece, scoreboard): #piece passed in is the capturer, self.piece_obj is the captured
+        points = self.getValue() * piece.getMultiplier()
+        scoreboard.increaseCapturePoints(piece.getTeam(), points)
+        piece.incMultiplier()
 
     def getSQpixels(self):
         return (self.x, self.y)

@@ -8,6 +8,7 @@ from components.pieces import *
 from components.chunkmap import ChunkMap
 from components.moves import *
 from components.infrastructure import *
+from components.menus import *
 
 import settings
 
@@ -27,6 +28,8 @@ class App:
     moves = []
     captures = []
     map = Map()
+    scoreboard = None
+    menu = None
     selected_piece = None
     color_turn = None
 
@@ -40,6 +43,8 @@ class App:
 
     def on_init(self):
         pygame.init()
+        self.scoreboard = Scoreboard()
+        self.menu = Menu()
         self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
         pygame.display.set_caption('Chesterman')
         self._running = True
@@ -98,7 +103,8 @@ class App:
 
                     if(self.validCastleLocation(x, y)):
                         self.createCastle(x, y, self.color_turn)
-                        self.turnSwitch()
+                        self.color_turn = "white"
+                        self._turn_surf = self._white_turn
 
                 #handle exit button being clicked
                 if event.type == pygame.QUIT:
@@ -132,6 +138,8 @@ class App:
             piece.draw(self._display_surf)
         for capture in self.captures:
             capture.draw(self._display_surf)
+        self.scoreboard.draw(self._display_surf)
+        if(self.menu.exists()): self.menu.draw(self._display_surf)
         pygame.display.flip()
 
     def on_cleanup(self):
@@ -165,6 +173,10 @@ class App:
                     #get mouse position in unit [pixels]
                     pos = pygame.mouse.get_pos()
 
+                    if(self.menu):
+                        selected_option = self.menu.grabClick(pos[0], pos[1])
+                        print(selected_option)
+
                     #convert mouse position into unit [SQpixels]
                     x = pos[0] - pos[0]%STEP_SIZE
                     y = pos[1] - pos[1]%STEP_SIZE
@@ -179,11 +191,12 @@ class App:
                         #compare move sprite location to mouse click
                         if capture.getSQpixels() == (x, y):
                             #move selected piece into capture is clicked
-                            capture.capturedBy(self.selected_piece)
+                            capture.capturedBy(self.selected_piece, self.scoreboard)
                             self.kill(capture)
                             self.selected_piece.moveTo(capture.getSQpixels())
                             self.moves = []
                             self.captures = []
+                            self.menu.vanish()
                             in_captures = True
 
                             self.turnSwitch()
@@ -193,11 +206,11 @@ class App:
                         for move in self.moves:
                             #compare move sprite location to mouse click
                             if move.getSQpixels() == (x, y):
-                                print(self.selected_piece.toString(), "->", move.getSQpixels())
                                 #move selected piece to this move if clicked
                                 self.selected_piece.moveTo(move.getSQpixels())
                                 self.moves = []
                                 self.captures = []
+                                self.menu.vanish()
                                 in_moves = True
 
                                 self.turnSwitch()
@@ -209,7 +222,7 @@ class App:
                                 if(piece.getTeam() == self.color_turn):
                                     #choose piece as selected if clicked
                                     self.selected_piece = piece
-                                    print(piece.toString())
+                                    self.menu.createKind(piece.getKind())
                                     self.moves = []
                                     self.captures = []
                                     #display legal moves and captures of selected piece
@@ -218,15 +231,14 @@ class App:
                                         self.moves.append(LegalMove(move))
                                     for capture in possible_captures:
                                         self.captures.append(LegalCapture(capture))
-                                else:
-                                    print("Wrong team")
                                 in_pieces = True
                                 break
                         #empty space was clicked
                         if(not in_pieces):
-                            print("Empty@("+str(x)+", "+str(y)+")")
                             self.selected_piece = None
                             self.moves = []
+                            self.captures = []
+                            #self.menu.vanish()
 
                 #handle exit button being clicked
                 if event.type == pygame.QUIT:

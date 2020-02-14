@@ -1,8 +1,14 @@
 TODO
 
-
--create turn prompts
+-detect menu option click
 -enable resource collection
+    -create resource Scoreboard
+-enable revival
+-enable wall building
 -improve initial game start up
--enable point collection
--enable resource use
+-enable other resource uses
+-change king moves to look for checks
+-enable special moves for within castle
+-enable capture protection near knights
+-enable resource boost near queens
+-create hot keys
