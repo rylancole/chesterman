@@ -42,11 +42,6 @@ class Menu:
         if(self.popupRect.collidepoint(x, y)):
             return "yes"
         return "none"
-        # if(self.options):
-        #     for option in self.options.iter():
-        #         if(self.option_surfs[option].collidepoint(x, y)):
-        #             return "option"
-        # return "none"
 
     def createKind(self, kind):
         self.create()
