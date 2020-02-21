@@ -142,13 +142,25 @@ class Map:
         else:
             return self.matrix[y][x] == "t"
 
-    def isWaterAt(self, x, y):
+    def isEmptyAt(self, x, y):
+        '''
+        Return true if square on castle grounds
+        Takes in coords in units [Squares]
+        '''
+
+        if(self.isWaterAt(x*STEP_SIZE, y*STEP_SIZE)):
+            return False
+        else:
+            return self.matrix[y][x] == "e"
+
+    def isWaterAt(self, x, y, inSquares=False):
         '''
         Return true for collision with water or end of map
         Takes in coords in units [SQpixels]
         '''
-        x = int(x/STEP_SIZE) #convert coords to units [Squares]
-        y = int(y/STEP_SIZE)
+        if(not inSquares):
+            x = int(x/STEP_SIZE) #convert coords to units [Squares]
+            y = int(y/STEP_SIZE)
         if(y >= len(self.matrix)): return True
         if(x >= len(self.matrix[y])): return True
         return self.matrix[y][x] == "w"

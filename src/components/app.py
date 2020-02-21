@@ -173,36 +173,51 @@ class App:
                     #get mouse position in unit [pixels]
                     pos = pygame.mouse.get_pos()
 
-                    if(self.menu):
+                    #set break conditions
+                    done_turn = False
+
+                    if(self.menu.exists()):
                         selected_option = self.menu.grabClick(pos[0], pos[1])
-                        print(selected_option)
+                        if(selected_option):
+                            done_turn = True
+                            opt_obj = selected_option.clicked(self.map)
+                            if(opt_obj["func"] == None): done_turn = False
+                            elif(opt_obj["func"] == "create"): print("Open a create menu")
+                            elif(opt_obj["func"] == "build"): print("Build a wall")
+                            elif(opt_obj["func"] == "energy"): print("Use energy")
+                            elif(opt_obj["func"] == "collect"): print("Collect ", opt_obj["resrc"])
+
+                            if(done_turn):
+                                self.moves = []
+                                self.captures = []
+                                self.menu.vanish()
+                                self.turnSwitch()
+
+
+
 
                     #convert mouse position into unit [SQpixels]
                     x = pos[0] - pos[0]%STEP_SIZE
                     y = pos[1] - pos[1]%STEP_SIZE
 
-                    #set break conditions
-                    in_captures = False
-                    in_moves = False
-                    in_pieces = False
+                    #check to see if a move was clicked
+                    if(not done_turn):
+                        for capture in self.captures:
+                            #compare move sprite location to mouse click
+                            if capture.getSQpixels() == (x, y):
+                                #move selected piece into capture is clicked
+                                capture.capturedBy(self.selected_piece, self.scoreboard)
+                                self.kill(capture)
+                                self.selected_piece.moveTo(capture.getSQpixels())
+                                self.moves = []
+                                self.captures = []
+                                self.menu.vanish()
+                                done_turn = True
+
+                                self.turnSwitch()
 
                     #check to see if a move was clicked
-                    for capture in self.captures:
-                        #compare move sprite location to mouse click
-                        if capture.getSQpixels() == (x, y):
-                            #move selected piece into capture is clicked
-                            capture.capturedBy(self.selected_piece, self.scoreboard)
-                            self.kill(capture)
-                            self.selected_piece.moveTo(capture.getSQpixels())
-                            self.moves = []
-                            self.captures = []
-                            self.menu.vanish()
-                            in_captures = True
-
-                            self.turnSwitch()
-
-                    #check to see if a move was clicked
-                    if(not in_captures):
+                    if(not done_turn):
                         for move in self.moves:
                             #compare move sprite location to mouse click
                             if move.getSQpixels() == (x, y):
@@ -211,18 +226,18 @@ class App:
                                 self.moves = []
                                 self.captures = []
                                 self.menu.vanish()
-                                in_moves = True
+                                done_turn = True
 
                                 self.turnSwitch()
 
                     #check to see if a piece was clicked
-                    if(not in_captures and not in_moves):
+                    if(not done_turn):
                         for piece in self.pieces:
                             if piece.getSQpixels() == (x, y):
                                 if(piece.getTeam() == self.color_turn):
                                     #choose piece as selected if clicked
                                     self.selected_piece = piece
-                                    self.menu.createKind(piece.getKind())
+                                    self.menu.createKind(piece)
                                     self.moves = []
                                     self.captures = []
                                     #display legal moves and captures of selected piece
@@ -231,14 +246,14 @@ class App:
                                         self.moves.append(LegalMove(move))
                                     for capture in possible_captures:
                                         self.captures.append(LegalCapture(capture))
-                                in_pieces = True
+                                done_turn = True
                                 break
                         #empty space was clicked
-                        if(not in_pieces):
+                        if(not done_turn):
                             self.selected_piece = None
                             self.moves = []
                             self.captures = []
-                            #self.menu.vanish()
+                            self.menu.vanish()
 
                 #handle exit button being clicked
                 if event.type == pygame.QUIT:
