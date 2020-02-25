@@ -326,15 +326,11 @@ class App:
                                 self.kill(capture)
                                 self.selected_piece.moveTo(capture.getSQpixels())
 
-                                if(self.getPiece(self.color_turn, "King").isInCheck(self.pieces, self.map)):
-                                    self.selected_piece.undoMove()
-                                    self.menu.createPrompt("Invalid move")
-                                else:
-                                    self.moves = []
-                                    self.captures = []
-                                    self.menu.vanish()
-                                    done_round = True
-                                    self.turnSwitch()
+                                self.moves = []
+                                self.captures = []
+                                self.menu.vanish()
+                                done_round = True
+                                self.turnSwitch()
 
                     #check to see if a move was clicked
                     if(not done_round):
@@ -344,13 +340,6 @@ class App:
                                 #move selected piece to this move if clicked
                                 if(move.getType() == "move"):
                                     self.selected_piece.moveTo(move.getSQpixels())
-                                    if(self.selected_piece.getKind() != "Pawn"):
-                                        self.second_move = True
-                                    else:
-                                        if(self.moved_already):
-                                            self.second_move = True
-                                        else:
-                                            self.moved_already = True
                                 elif(move.getType() == "drop"):
                                     self.pieces.append(move.getPiece())
 
@@ -358,6 +347,13 @@ class App:
                                     self.selected_piece.undoMove()
                                     self.menu.createPrompt("Invalid move")
                                 else:
+                                    if(self.selected_piece.getKind() != "Pawn"):
+                                        self.second_move = True
+                                    else:
+                                        if(self.moved_already):
+                                            self.second_move = True
+                                        else:
+                                            self.moved_already = True
                                     self.moves = []
                                     self.captures = []
                                     self.menu.vanish()
