@@ -16,11 +16,13 @@ class Menu:
 
     def update(self):
         self.text_font = pygame.font.Font('freesansbold.ttf',int((3/4)*STEP_SIZE))
-        self.popupSurf = pygame.Surface((STEP_SIZE*CHUNK_SIZE*2, STEP_SIZE*CHUNK_SIZE))
+        self.popupSurf = pygame.Surface((STEP_SIZE*CHUNK_SIZE*2, STEP_SIZE*CHUNK_SIZE*2))
         if(self.options):
             i = 0
+            self.option_surfs = {}
             for option in self.options.iter():
-                textSurf = self.text_font.render(option, True, (255, 255, 255))
+                s = " >"+option
+                textSurf = self.text_font.render(s, True, (255, 255, 255))
                 textRect = textSurf.get_rect()
                 self.option_surfs[option] = textRect
                 textRect.midleft = (0,(i+1)*STEP_SIZE)
@@ -38,10 +40,26 @@ class Menu:
     def exists(self):
         return self.doesExist
 
+    def optionClick(self, x, y):
+        for key in self.option_surfs:
+            if(self.option_surfs[key].collidepoint(x, y)):
+                self.options.selected_option = key
+
     def grabClick(self, x, y):
         if(self.popupRect.collidepoint(x, y)):
+            if(self.options.size() > 1):
+                self.optionClick(x-1040, y-(400-STEP_SIZE*CHUNK_SIZE))
             return self.options
         return False
+
+    def createPrompt(self, string):
+        self.create()
+        self.options = Prompt(string)
+        self.update()
+
+    def changePrompt(self, string):
+        self.options.changePrompt(string)
+        self.update()
 
     def createKind(self, piece):
         self.create()
@@ -67,13 +85,17 @@ class Options():
     def iter(self):
         return self.options
 
+    def size(self):
+        return len(self.options)
+
     def clicked(self, map):
         return {"func": None}
 
 
 class KingOptions(Options):
 
-    options = [' >Create']
+    options = ['Queen', 'Rook', 'Bishop', 'Knight', 'Pawn']
+    selected_option = None
 
     def __init__(self, piece):
         if(piece.getKind() != "King"):
@@ -81,7 +103,7 @@ class KingOptions(Options):
         self.piece = piece
 
     def clicked(self, map):
-        return {"func": "create"}
+        return {"func": "create", "choice": self.selected_option}
 
 class QueenOptions(Options):
 
@@ -94,7 +116,7 @@ class QueenOptions(Options):
 
 class RookOptions(Options):
 
-    options = [' >Build']
+    options = ['Build']
 
     def __init__(self, piece):
         if(piece.getKind() != "Rook"):
@@ -106,7 +128,7 @@ class RookOptions(Options):
 
 class KnightOptions(Options):
 
-    options = [' >Energy']
+    options = ['Energy']
 
     def __init__(self, piece):
         if(piece.getKind() != "Knight"):
@@ -118,7 +140,8 @@ class KnightOptions(Options):
 
 class BishopOptions(Options):
 
-    options = [' >Create']
+    options = ['Knight', 'Pawn']
+    selected_option = None
 
     def __init__(self, piece):
         if(piece.getKind() != "Bishop"):
@@ -126,11 +149,11 @@ class BishopOptions(Options):
         self.piece = piece
 
     def clicked(self, map):
-        return {"func": "create"}
+        return {"func": "create", "choice": self.selected_option}
 
 class PawnOptions(Options):
 
-    options = [' >Collect']
+    options = ['Collect']
 
     def __init__(self, piece):
         if(piece.getKind() != "Pawn"):
@@ -141,5 +164,15 @@ class PawnOptions(Options):
         x, y = self.piece.getSquare()
         if(map.isWaterAt(x, y, True) or map.isCastleAt(x, y) or map.isEmptyAt(x, y)):
             return {"func": None}
-        block = map.get(x, y)
+        block = map.get(x, y, True)
         return {"func": "collect", "resrc": block}
+
+class Prompt(Options):
+
+    options = []
+
+    def __init__(self, string):
+        self.options.append(string)
+
+    def changePrompt(self, string):
+        self.options[0] = string

@@ -1,14 +1,22 @@
 TODO
 
--detect menu option click
--enable resource collection
-    -create resource Scoreboard
--enable revival
--enable wall building
--improve initial game start up
--enable other resource uses
 -change king moves to look for checks
--enable special moves for within castle
+    -give check points
+-enable check mate
+-enable gold
+    -collection points
+-put resource restraints on revivals
+-enable wall building
+
+-make undo and load feature
+
 -enable capture protection near knights
 -enable resource boost near queens
+
+-App object overhaul
+
+-build stat window for selected piece
 -create hot keys
+-enable special moves for within castle
+    -rook switch
+    -increased revival drop points

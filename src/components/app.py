@@ -24,14 +24,17 @@ class App:
     '''
 
     pieces = []
-    castles = []
+    castles = {}
     moves = []
     captures = []
     map = Map()
     scoreboard = None
+    resrcboard = None
     menu = None
     selected_piece = None
     color_turn = None
+    second_move = False
+    moved_already = False
 
     def __init__(self, w, h):
         self._running = True
@@ -43,7 +46,8 @@ class App:
 
     def on_init(self):
         pygame.init()
-        self.scoreboard = Scoreboard()
+        self.scoreboard = Scoreboard(1)
+        self.resrcboard = ResourceBoard(6)
         self.menu = Menu()
         self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
         pygame.display.set_caption('Chesterman')
@@ -63,27 +67,79 @@ class App:
                     return False
         return True
 
-    def createCastle(self, x, y, team):
-        self.castles.append(Castle(x, y))
-        self.map.putCastle(x, y)
+    def establishCastle(self, x, y, team):
+        self.castles[team] = Castle(x, y)
 
-        #create white pieces
-        self.pieces.append(King(team, x+1, y+1))
-        self.pieces.append(Queen(team, x+2, y+1))
-        self.pieces.append(Rook(team, x+1, y))
-        self.pieces.append(Rook(team, x+2, y))
-        self.pieces.append(Knight(team, x+3, y+1))
-        self.pieces.append(Knight(team, x, y))
-        self.pieces.append(Bishop(team, x, y+1))
-        self.pieces.append(Bishop(team, x+3, y))
-        self.pieces.append(Pawn(team, x, y+2))
-        self.pieces.append(Pawn(team, x+1, y+2))
-        self.pieces.append(Pawn(team, x+2, y+2))
-        self.pieces.append(Pawn(team, x+3, y+2))
+        self.moves = []
+        self.moves.append(LegalEstablishment(x, y+2, "west"))
+        self.moves.append(LegalEstablishment(x+2, y, "north"))
+        self.moves.append(LegalEstablishment(x+2, y+3, "south"))
+        self.moves.append(LegalEstablishment(x+3, y+2, "east"))
+
+    def getPiece(self, team, kind):
+        for piece in self.pieces:
+            if piece.getKind() == kind and piece.getTeam() == team:
+                return piece
+        return None
+
+    def loadPieces(self, team):
+        king = self.getPiece(team, "King")
+        x, y = king.getSquare()
+        corner = king.getCorner()
+
+        if(corner == "north" or corner == "south"):
+            self.pieces.append(Queen(team, x-1, y))
+            self.pieces.append(Bishop(team, x+1, y))
+            self.pieces.append(Bishop(team, x-2, y))
+        elif(corner == "east" or corner == "west"):
+            self.pieces.append(Queen(team, x, y-1))
+            self.pieces.append(Bishop(team, x, y+1))
+            self.pieces.append(Bishop(team, x, y-2))
+
+        if(corner == "north"):
+            self.pieces.append(Rook(team, x, y+1))
+            self.pieces.append(Rook(team, x-1, y+1))
+            self.pieces.append(Knight(team, x+1, y+1))
+            self.pieces.append(Knight(team, x-2, y+1))
+            self.pieces.append(Pawn(team, x, y-1))
+            self.pieces.append(Pawn(team, x-1, y-1))
+            self.pieces.append(Pawn(team, x+1, y-1))
+            self.pieces.append(Pawn(team, x-2, y-1))
+        elif(corner == "south"):
+            self.pieces.append(Rook(team, x, y-1))
+            self.pieces.append(Rook(team, x-1, y-1))
+            self.pieces.append(Knight(team, x+1, y-1))
+            self.pieces.append(Knight(team, x-2, y-1))
+            self.pieces.append(Pawn(team, x, y+1))
+            self.pieces.append(Pawn(team, x-1, y+1))
+            self.pieces.append(Pawn(team, x+1, y+1))
+            self.pieces.append(Pawn(team, x-2, y+1))
+        elif(corner == "west"):
+            self.pieces.append(Rook(team, x+1, y))
+            self.pieces.append(Rook(team, x+1, y-1))
+            self.pieces.append(Knight(team, x+1, y+1))
+            self.pieces.append(Knight(team, x+1, y-2))
+            self.pieces.append(Pawn(team, x-1, y))
+            self.pieces.append(Pawn(team, x-1, y-1))
+            self.pieces.append(Pawn(team, x-1, y+1))
+            self.pieces.append(Pawn(team, x-1, y-2))
+        elif(corner == "east"):
+            self.pieces.append(Rook(team, x-1, y))
+            self.pieces.append(Rook(team, x-1, y-1))
+            self.pieces.append(Knight(team, x-1, y+1))
+            self.pieces.append(Knight(team, x-1, y-2))
+            self.pieces.append(Pawn(team, x+1, y))
+            self.pieces.append(Pawn(team, x+1, y-1))
+            self.pieces.append(Pawn(team, x+1, y+1))
+            self.pieces.append(Pawn(team, x+1, y-2))
 
     def on_setup(self):
         self.color_turn = "black"
-        while( len(self.castles) < 2 ):
+        run_setup = True
+
+        self.menu.createPrompt("Place your castle")
+
+        while( run_setup ):
             ev = pygame.event.get()
 
             for event in ev:
@@ -101,10 +157,35 @@ class App:
                     x = int(x/STEP_SIZE)
                     y = int(y/STEP_SIZE)
 
-                    if(self.validCastleLocation(x, y)):
-                        self.createCastle(x, y, self.color_turn)
-                        self.color_turn = "white"
-                        self._turn_surf = self._white_turn
+                    clicked_king = False
+
+                    for move in self.moves:
+                        #compare move sprite location to mouse click
+                        if move.getSquare() == (x, y):
+                            #move selected piece to this move if clicked
+                            if(move.getCorner() == "north"): self.pieces.append(King(self.color_turn, x, y+2, "north"))
+                            elif(move.getCorner() == "south"): self.pieces.append(King(self.color_turn, x, y-2, "south"))
+                            elif(move.getCorner() == "east"): self.pieces.append(King(self.color_turn, x-2, y, "east"))
+                            elif(move.getCorner() == "west"): self.pieces.append(King(self.color_turn, x+2, y, "west"))
+
+                            clicked_king = True
+
+                            self.moves = []
+                            self.loadPieces(self.color_turn)
+                            self.color_turn = "white"
+                            self._turn_surf = self._white_turn
+                            if(len(self.castles) > 1):
+                                self.menu.vanish()
+                                run_setup = False
+                            else:
+                                self.menu.changePrompt("Place your castle")
+
+                            self.map.putCastle(x, y)
+
+
+                    if(not clicked_king and self.validCastleLocation(x, y)):
+                        self.establishCastle(x, y, self.color_turn)
+                        self.menu.changePrompt("Choose a direction")
 
                 #handle exit button being clicked
                 if event.type == pygame.QUIT:
@@ -130,8 +211,8 @@ class App:
         self._display_surf.fill((0,0,0))
         self._display_surf.blit(self._back_surf,(0,0))
         self._display_surf.blit(self._turn_surf,(1040,0))
-        for castle in self.castles:
-            castle.draw(self._display_surf)
+        for key in self.castles:
+            self.castles[key].draw(self._display_surf)
         for move in self.moves:
             move.draw(self._display_surf)
         for piece in self.pieces:
@@ -139,11 +220,27 @@ class App:
         for capture in self.captures:
             capture.draw(self._display_surf)
         self.scoreboard.draw(self._display_surf)
+        self.resrcboard.draw(self._display_surf)
         if(self.menu.exists()): self.menu.draw(self._display_surf)
         pygame.display.flip()
 
     def on_cleanup(self):
         pygame.quit()
+
+    def creation(self, choice):
+        self.moves = []
+        possible_drops = self.selected_piece.avaliableDropPoints(self.pieces, self.map)
+        for drop in possible_drops:
+            self.moves.append(LegalDrop(drop, self.color_turn, choice))
+
+    def anyKingInCheck(self):
+        for piece in self.pieces:
+            possible_moves, possible_captures = piece.avaliableMoves(self.pieces, self.map)
+            for capture in possible_captures:
+                if capture.getKind() == "King":
+                    return True
+
+        return False
 
     def turnSwitch(self):
         if(self.color_turn == "white"):
@@ -152,6 +249,10 @@ class App:
         else:
             self.color_turn = "white"
             self._turn_surf = self._white_turn
+        self.second_move = False
+        self.moved_already = False
+
+        print(self.anyKingInCheck())
 
     def kill(self, capture):
         self.pieces.remove(capture.getPieceObj())
@@ -174,20 +275,35 @@ class App:
                     pos = pygame.mouse.get_pos()
 
                     #set break conditions
-                    done_turn = False
+                    done_round = False
 
                     if(self.menu.exists()):
                         selected_option = self.menu.grabClick(pos[0], pos[1])
                         if(selected_option):
-                            done_turn = True
+                            done_round = True
                             opt_obj = selected_option.clicked(self.map)
-                            if(opt_obj["func"] == None): done_turn = False
-                            elif(opt_obj["func"] == "create"): print("Open a create menu")
-                            elif(opt_obj["func"] == "build"): print("Build a wall")
-                            elif(opt_obj["func"] == "energy"): print("Use energy")
-                            elif(opt_obj["func"] == "collect"): print("Collect ", opt_obj["resrc"])
-
-                            if(done_turn):
+                            if(opt_obj["func"] == None):
+                                done_round = False
+                            elif(opt_obj["func"] == "create"):
+                                self.creation(opt_obj["choice"])
+                            elif(opt_obj["func"] == "build"):
+                                print("Build a wall")
+                                self.moves = []
+                                self.captures = []
+                                self.menu.vanish()
+                                self.turnSwitch()
+                            elif(opt_obj["func"] == "energy"):
+                                print("Use energy")
+                                self.moves = []
+                                self.captures = []
+                                self.menu.vanish()
+                                self.turnSwitch()
+                            elif(opt_obj["func"] == "collect"):
+                                self.resrcboard.increaseResource(
+                                    self.color_turn,
+                                    opt_obj["resrc"],
+                                    1
+                                )
                                 self.moves = []
                                 self.captures = []
                                 self.menu.vanish()
@@ -201,7 +317,7 @@ class App:
                     y = pos[1] - pos[1]%STEP_SIZE
 
                     #check to see if a move was clicked
-                    if(not done_turn):
+                    if(not done_round):
                         for capture in self.captures:
                             #compare move sprite location to mouse click
                             if capture.getSQpixels() == (x, y):
@@ -209,31 +325,52 @@ class App:
                                 capture.capturedBy(self.selected_piece, self.scoreboard)
                                 self.kill(capture)
                                 self.selected_piece.moveTo(capture.getSQpixels())
-                                self.moves = []
-                                self.captures = []
-                                self.menu.vanish()
-                                done_turn = True
 
-                                self.turnSwitch()
+                                if(self.getPiece(self.color_turn, "King").isInCheck(self.pieces, self.map)):
+                                    self.selected_piece.undoMove()
+                                    self.menu.createPrompt("Invalid move")
+                                else:
+                                    self.moves = []
+                                    self.captures = []
+                                    self.menu.vanish()
+                                    done_round = True
+                                    self.turnSwitch()
 
                     #check to see if a move was clicked
-                    if(not done_turn):
+                    if(not done_round):
                         for move in self.moves:
                             #compare move sprite location to mouse click
                             if move.getSQpixels() == (x, y):
                                 #move selected piece to this move if clicked
-                                self.selected_piece.moveTo(move.getSQpixels())
-                                self.moves = []
-                                self.captures = []
-                                self.menu.vanish()
-                                done_turn = True
+                                if(move.getType() == "move"):
+                                    self.selected_piece.moveTo(move.getSQpixels())
+                                    if(self.selected_piece.getKind() != "Pawn"):
+                                        self.second_move = True
+                                    else:
+                                        if(self.moved_already):
+                                            self.second_move = True
+                                        else:
+                                            self.moved_already = True
+                                elif(move.getType() == "drop"):
+                                    self.pieces.append(move.getPiece())
 
-                                self.turnSwitch()
+                                if(self.getPiece(self.color_turn, "King").isInCheck(self.pieces, self.map)):
+                                    self.selected_piece.undoMove()
+                                    self.menu.createPrompt("Invalid move")
+                                else:
+                                    self.moves = []
+                                    self.captures = []
+                                    self.menu.vanish()
+                                    done_round = True
+
+                                    if(self.second_move): self.turnSwitch()
 
                     #check to see if a piece was clicked
-                    if(not done_turn):
+                    if(not done_round):
                         for piece in self.pieces:
-                            if piece.getSQpixels() == (x, y):
+                            if self.moved_already and piece.getKind() != "Pawn":
+                                pass
+                            elif piece.getSQpixels() == (x, y):
                                 if(piece.getTeam() == self.color_turn):
                                     #choose piece as selected if clicked
                                     self.selected_piece = piece
@@ -246,10 +383,10 @@ class App:
                                         self.moves.append(LegalMove(move))
                                     for capture in possible_captures:
                                         self.captures.append(LegalCapture(capture))
-                                done_turn = True
+                                done_round = True
                                 break
                         #empty space was clicked
-                        if(not done_turn):
+                        if(not done_round):
                             self.selected_piece = None
                             self.moves = []
                             self.captures = []

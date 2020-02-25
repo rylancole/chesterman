@@ -6,91 +6,72 @@ STEP_SIZE = settings.STEP_SIZE
 CHUNK_SIZE = settings.CHUNK_SIZE
 WIDTH = settings.WIDTH
 
-class Scoreboard:
+class Board:
 
-    b_chk = 0
-    b_cap = 0
-    b_col = 0
-    b_tot = 0
+    dict_list = []
 
-    w_chk = 0
-    w_cap = 0
-    w_col = 0
-    w_tot = 0
+    h = 0
 
-    def __init__(self):
+    def __init__(self, height):
         self.text_font = pygame.font.Font('freesansbold.ttf',int((3/4)*STEP_SIZE))
-        x_inc = STEP_SIZE*CHUNK_SIZE
-        x = x_inc*WIDTH
-        y = STEP_SIZE*(CHUNK_SIZE+1)
+        self.h = height
 
-        self._black_label_surf, self._black_label_rect = self.text_objects("BLACK", self.text_font)
-        self._black_label_rect.midleft = (x,y)
+        self.dict["black"] = {}
+        self.dict["white"] = {}
 
-        self._white_label_surf, self._white_label_rect = self.text_objects("WHITE", self.text_font)
-        self._white_label_rect.midleft = (x+x_inc,y)
+        for key in self.dict_list:
+            self.dict["black"][key] = 0
+            self.dict["white"][key] = 0
 
-    def text_objects(self, text, font):
+    def text_objects(self, text, font, midleft):
         textSurface = font.render(text, True, (255,255,255))
-        return textSurface, textSurface.get_rect()
+        textRect = textSurface.get_rect()
+        textRect.midleft = midleft
+        return textSurface, textRect
 
-    def increaseCheckPoints(self, team, chk):
-        if(team == "white"): self.w_chk += chk
-        elif(team == "black"): self.b_chk += chk
-
-    def increaseCapturePoints(self, team, cap):
-        if(team == "white"): self.w_cap += cap
-        elif(team == "black"): self.b_cap += cap
-
-    def increaseCollectionPoints(self, team, col):
-        if(team == "white"): self.w_col += col
-        elif(team == "black"): self.b_col += col
-
-    def update(self):
-        self.b_tot = self.b_chk + self.b_cap + self.b_col
-        self.w_tot = self.w_chk + self.w_cap + self.w_col
-
-        x_inc = STEP_SIZE*CHUNK_SIZE
-        x = x_inc*WIDTH
-        y = STEP_SIZE*(CHUNK_SIZE+1)+STEP_SIZE
-
-        self._b_chk_surf, self._b_chk_rect = self.text_objects("  Chk: "+str(self.b_chk), self.text_font)
-        self._b_chk_rect.midleft = (x,y)
-        self._w_chk_surf, self._w_chk_rect = self.text_objects("  Chk: "+str(self.w_chk), self.text_font)
-        self._w_chk_rect.midleft = (x+x_inc,y)
-        y += STEP_SIZE
-
-        self._b_cap_surf, self._b_cap_rect = self.text_objects("  Cap: "+str(self.b_cap), self.text_font)
-        self._b_cap_rect.midleft = (x,y)
-        self._w_cap_surf, self._w_cap_rect = self.text_objects("  Cap: "+str(self.w_cap), self.text_font)
-        self._w_cap_rect.midleft = (x+x_inc,y)
-        y += STEP_SIZE
-
-        self._b_col_surf, self._b_col_rect = self.text_objects("  Coll: "+str(self.b_col), self.text_font)
-        self._b_col_rect.midleft = (x,y)
-        self._w_col_surf, self._w_col_rect = self.text_objects("  Coll: "+str(self.w_col), self.text_font)
-        self._w_col_rect.midleft = (x+x_inc,y)
-        y += STEP_SIZE
-
-        self._b_tot_surf, self._b_tot_rect = self.text_objects("  Total: "+str(self.b_tot), self.text_font)
-        self._b_tot_rect.midleft = (x,y)
-        self._w_tot_surf, self._w_tot_rect = self.text_objects("  Total: "+str(self.w_tot), self.text_font)
-        self._w_tot_rect.midleft = (x+x_inc,y)
+    def increaseResource(self, team, resrc, amt):
+        self.dict[team][resrc] += amt
 
     def draw(self, surface):
-        self.update()
+        x_inc = STEP_SIZE*CHUNK_SIZE
+        x = x_inc*WIDTH
 
-        surface.blit(self._black_label_surf, self._black_label_rect)
-        surface.blit(self._b_chk_surf, self._b_chk_rect)
-        surface.blit(self._b_cap_surf, self._b_cap_rect)
-        surface.blit(self._b_col_surf, self._b_col_rect)
-        surface.blit(self._b_tot_surf, self._b_tot_rect)
+        for color_key in self.dict:
+            y = STEP_SIZE*(CHUNK_SIZE+self.h)+STEP_SIZE
+            for resrc_key in self.dict[color_key]:
+                s, r = self.text_objects("  "+resrc_key+": "+str(self.dict[color_key][resrc_key]), self.text_font, (x,y))
+                surface.blit(s, r)
+                y += STEP_SIZE
+            x += x_inc
 
-        surface.blit(self._white_label_surf, self._white_label_rect)
-        surface.blit(self._w_chk_surf, self._w_chk_rect)
-        surface.blit(self._w_cap_surf, self._w_cap_rect)
-        surface.blit(self._w_col_surf, self._w_col_rect)
-        surface.blit(self._w_tot_surf, self._w_tot_rect)
+class Scoreboard(Board):
+
+    dict_list = [
+        "Chk", "Col", "Cap", "Tot"
+    ]
+    dict = {}
+
+    def increaseCheckPoints(self, team, chk):
+        self.dict[team]["Chk"] += chk
+        self.updateTotal(team)
+
+    def increaseCapturePoints(self, team, cap):
+        self.dict[team]["Cap"] += cap
+        self.updateTotal(team)
+
+    def increaseCollectionPoints(self, team, col):
+        self.dict[team]["Col"] += col
+        self.updateTotal(team)
+
+    def updateTotal(self, team):
+        self.dict[team]["Tot"] = self.dict[team]["Chk"] + self.dict[team]["Col"] + self.dict[team]["Cap"]
+
+class ResourceBoard(Board):
+
+    dict_list = [
+        "Hay", "Crop", "Stone", "Gold"
+    ]
+    dict = {}
 
 class Map:
 
@@ -117,11 +98,20 @@ class Map:
                     self.matrix[i].append(c)
             i += 1
 
-    def get(self, x, y):
+    def get(self, x, y, needFullWord=False):
         '''
         Return character in at (x, y)
         '''
-        return self.matrix[y][x]
+        if(not needFullWord):
+            return self.matrix[y][x]
+
+        dict = {
+            "s": "Stone",
+            "f": "Hay",
+            "c": "Crop"
+        }
+
+        return dict[self.matrix[y][x]]
 
     def putCastle(self, x, y):
         '''

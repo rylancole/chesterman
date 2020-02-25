@@ -21,6 +21,9 @@ class GamePiece:
     _white_image_path = None    #used to initialize image
     _black_image_path = None
     captures = []
+    prev_x = None
+    prev_y = None
+
 
     def __init__(self, team, x, y):
         #store move coordinates in unit [SQpixels]
@@ -57,6 +60,19 @@ class GamePiece:
 
         return moves
 
+    def avaliableDropPoints(self, pieces, map):
+        moves = []
+        self.captures = []
+        moves.extend(self.movesInDirection("east", map, pieces, 1, False))
+        moves.extend(self.movesInDirection("west", map, pieces, 1, False))
+        moves.extend(self.movesInDirection("north", map, pieces, 1, False))
+        moves.extend(self.movesInDirection("south", map, pieces, 1, False))
+        moves.extend(self.movesInDirection("northeast", map, pieces, 1, False))
+        moves.extend(self.movesInDirection("northwest", map, pieces, 1, False))
+        moves.extend(self.movesInDirection("southeast", map, pieces, 1, False))
+        moves.extend(self.movesInDirection("southwest", map, pieces, 1, False))
+        return moves
+
     def avaliableMoves(self, pieces, map):
         moves = []
         self.captures = []
@@ -65,8 +81,15 @@ class GamePiece:
 
     def moveTo(self, coord):
         #takes coords in units [SQpixels]
+        self.prev_x = self.x
+        self.prev_y = self.y
+
         self.x = coord[0]
         self.y = coord[1]
+
+    def undoMove(self):
+        self.x = self.prev_x
+        self.y = self.prev_y
 
     def getSQpixels(self):
         return (self.x, self.y)
@@ -79,6 +102,10 @@ class GamePiece:
 
     def getTeam(self):
         return self.team
+
+    def getCorner(self):
+        # only Kings should return a valid corner
+        return None
 
     def getMultiplier(self):
         return self.multiplier
@@ -96,6 +123,22 @@ class King(GamePiece):
     _black_image_path = "sprites/black_king_20x20.png"
     captures = []
 
+    def __init__(self, team, x, y, corner):
+        #store move coordinates in unit [SQpixels]
+        self.x = x*STEP_SIZE
+        self.y = y*STEP_SIZE
+
+        self.multiplier = 1
+        self.team = team
+        self.corner = corner
+        if(team == "white"):
+            self._image_surf = pygame.image.load(self._white_image_path).convert()
+        elif(team == "black"):
+            self._image_surf = pygame.image.load(self._black_image_path).convert()
+
+    def getCorner(self):
+        return self.corner
+
     def avaliableMoves(self, pieces, map):
         moves = []
         self.captures = []
@@ -108,6 +151,16 @@ class King(GamePiece):
         moves.extend(self.movesInDirection("southeast", map, pieces, 1))
         moves.extend(self.movesInDirection("southwest", map, pieces, 1))
         return moves, self.captures
+
+    def isInCheck(self, pieces, map):
+        for piece in pieces:
+            possible_moves, possible_captures = piece.avaliableMoves(pieces, map)
+            for capture in possible_captures:
+                if capture.getKind() == "King" and capture.getTeam() == self.team:
+                    return True
+
+        return False
+
 
 class Queen(GamePiece):
 
