@@ -9,6 +9,7 @@ TODO
 -enable wall building
 
 -make undo and load feature
+-wrap up Chesterman Demo
 
 -enable capture protection near knights
 -enable resource boost near queens

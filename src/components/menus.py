@@ -169,10 +169,10 @@ class PawnOptions(Options):
 
 class Prompt(Options):
 
-    options = []
+    options = ['']
 
     def __init__(self, string):
-        self.options.append(string)
+        self.options[0] = string
 
     def changePrompt(self, string):
         self.options[0] = string

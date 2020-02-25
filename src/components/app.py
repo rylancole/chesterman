@@ -29,6 +29,7 @@ class App:
     captures = []
     map = Map()
     scoreboard = None
+    checkMultiplier = {"white": 1, "black": 1}
     resrcboard = None
     menu = None
     selected_piece = None
@@ -244,18 +245,33 @@ class App:
 
     def turnSwitch(self):
         if(self.color_turn == "white"):
+            opp_king = self.getPiece("black", "King")
+            if(opp_king.isInCheck(self.pieces, self.map)):
+                self.scoreboard.increaseCheckPoints("white", 5*self.checkMultiplier["white"])
+                self.checkMultiplier["white"] += 1
+            else:
+                self.checkMultiplier["white"] = 1
+
             self.color_turn = "black"
             self._turn_surf = self._black_turn
         else:
+            opp_king = self.getPiece("white", "King")
+            if(opp_king.isInCheck(self.pieces, self.map)):
+                self.scoreboard.increaseCheckPoints("black", 5*self.checkMultiplier["black"])
+                self.checkMultiplier["black"] += 1
+            else:
+                self.checkMultiplier["black"] = 1
+
             self.color_turn = "white"
             self._turn_surf = self._white_turn
         self.second_move = False
         self.moved_already = False
 
-        print(self.anyKingInCheck())
-
     def kill(self, capture):
         self.pieces.remove(capture.getPieceObj())
+
+    def unkill(self, capture):
+        self.pieces.append(capture.getPieceObj())
 
     def on_gameplay(self):
 
@@ -277,6 +293,7 @@ class App:
                     #set break conditions
                     done_round = False
 
+#HANDLE MENUS
                     if(self.menu.exists()):
                         selected_option = self.menu.grabClick(pos[0], pos[1])
                         if(selected_option):
@@ -316,22 +333,29 @@ class App:
                     x = pos[0] - pos[0]%STEP_SIZE
                     y = pos[1] - pos[1]%STEP_SIZE
 
-                    #check to see if a move was clicked
+#HANDLE CAPTURES
+                    #check to see if a capture was clicked
                     if(not done_round):
                         for capture in self.captures:
                             #compare move sprite location to mouse click
                             if capture.getSQpixels() == (x, y):
                                 #move selected piece into capture is clicked
-                                capture.capturedBy(self.selected_piece, self.scoreboard)
                                 self.kill(capture)
                                 self.selected_piece.moveTo(capture.getSQpixels())
+                                if(self.getPiece(self.color_turn, "King").isInCheck(self.pieces, self.map)):
+                                    self.selected_piece.undoMove()
+                                    self.unkill(capture)
+                                    self.menu.createPrompt("Invalid move")
+                                else:
+                                    capture.capturedBy(self.selected_piece, self.scoreboard)
+                                    self.moves = []
+                                    self.captures = []
+                                    self.menu.vanish()
+                                    done_round = True
 
-                                self.moves = []
-                                self.captures = []
-                                self.menu.vanish()
-                                done_round = True
-                                self.turnSwitch()
+                                    self.turnSwitch()
 
+#HANDLE MOVING
                     #check to see if a move was clicked
                     if(not done_round):
                         for move in self.moves:
@@ -361,6 +385,7 @@ class App:
 
                                     if(self.second_move): self.turnSwitch()
 
+#HANDLE PIECE SELECTION
                     #check to see if a piece was clicked
                     if(not done_round):
                         for piece in self.pieces:
@@ -381,6 +406,8 @@ class App:
                                         self.captures.append(LegalCapture(capture))
                                 done_round = True
                                 break
+
+#HANDLE OFF FOCUS
                         #empty space was clicked
                         if(not done_round):
                             self.selected_piece = None
