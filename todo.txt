@@ -1,11 +1,10 @@
 TODO
 
--fix win sequence
--allow pawn second move to end turn
-    -force end turn on checkmate
+-change checkmate to give 250 points
 -enable gold
     -collection points
 -put resource restraints on revivals
+-end game when winner has enough points
 
 -make undo and load feature
 -wrap up Chesterman Demo

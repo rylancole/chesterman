@@ -239,33 +239,28 @@ class App:
         self.menu.createPrompt(winner+" wins!")
         time.sleep(5)
 
-    def turnSwitch(self):
-        if(self.color_turn == "white"):
-            opp_king = self.getPiece("black", "King")
-            if(opp_king.isInCheck(self.pieces, self.map)):
-                if(opp_king.isInCheckMate(self.pieces, self.map)):
-                    self._running = False
-                    self.annouceWinner("white")
-                    return
-                self.scoreboard.increaseCheckPoints("white", 5*self.checkMultiplier["white"])
-                self.checkMultiplier["white"] += 1
-            else:
-                self.checkMultiplier["white"] = 1
+    def notColor(self, team):
+        if(team == "white"):
+            return "black"
+        if(team == "black"):
+            return "white"
 
+    def turnSwitch(self):
+        opp_king = self.getPiece(self.notColor(self.color_turn), "King")
+        if(opp_king.isInCheck(self.pieces, self.map)):
+            if(opp_king.isInCheckMate(self.pieces, self.map)):
+                self._running = False
+                self.annouceWinner(self.color_turn)
+                return
+            self.scoreboard.increaseCheckPoints(self.color_turn, 5*self.checkMultiplier[self.color_turn])
+            self.checkMultiplier[self.color_turn] += 1
+        else:
+            self.checkMultiplier[self.color_turn] = 1
+
+        if(self.color_turn == "white"):
             self.color_turn = "black"
             self._turn_surf = self._black_turn
         else:
-            opp_king = self.getPiece("white", "King")
-            if(opp_king.isInCheck(self.pieces, self.map)):
-                if(opp_king.isInCheckMate(self.pieces, self.map)):
-                    self._running = False
-                    self.annouceWinner("black")
-                    return
-                self.scoreboard.increaseCheckPoints("black", 5*self.checkMultiplier["black"])
-                self.checkMultiplier["black"] += 1
-            else:
-                self.checkMultiplier["black"] = 1
-
             self.color_turn = "white"
             self._turn_surf = self._white_turn
         self.second_move = False
@@ -315,6 +310,11 @@ class App:
                                 self.turnSwitch()
                             elif(opt_obj["func"] == "energy"):
                                 print("Use energy")
+                                self.moves = []
+                                self.captures = []
+                                self.menu.vanish()
+                                self.turnSwitch()
+                            elif(opt_obj["func"] == "end"):
                                 self.moves = []
                                 self.captures = []
                                 self.menu.vanish()
@@ -380,10 +380,15 @@ class App:
                                         if(self.moved_already):
                                             self.second_move = True
                                         else:
-                                            self.moved_already = True
+                                            opp_king = self.getPiece(self.notColor(self.color_turn), "King")
+                                            if(opp_king.isInCheck(self.pieces, self.map)):
+                                                self.second_move = True
+                                            else:
+                                                self.moved_already = True
+                                                self.menu.createEndMenu()
                                     self.moves = []
                                     self.captures = []
-                                    self.menu.vanish()
+                                    if(not self.moved_already): self.menu.vanish()
                                     if(self.second_move): self.turnSwitch()
                                 done_round = True
 
@@ -416,7 +421,10 @@ class App:
                             self.selected_piece = None
                             self.moves = []
                             self.captures = []
-                            self.menu.vanish()
+                            if(not self.moved_already):
+                                self.menu.vanish()
+                            else:
+                                self.menu.createEndMenu()
 
                 #handle exit button being clicked
                 if event.type == pygame.QUIT:

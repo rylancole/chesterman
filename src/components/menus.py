@@ -52,6 +52,11 @@ class Menu:
             return self.options
         return False
 
+    def createEndMenu(self):
+        self.create()
+        self.options = EndOptions()
+        self.update()
+
     def createPrompt(self, string):
         self.create()
         self.options = Prompt(string)
@@ -170,6 +175,17 @@ class PawnOptions(Options):
             return {"func": None}
         block = map.get(x, y, True)
         return {"func": "collect", "resrc": block}
+
+class EndOptions(Options):
+
+    options = ['End Turn']
+
+    def __init__(self):
+        pass
+
+    def clicked(self, string):
+        return {"func": "end"}
+
 
 class Prompt(Options):
 
