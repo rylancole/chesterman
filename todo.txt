@@ -4,6 +4,8 @@ TODO
     -create exchange button
     -clicking this opens exchange menu
     -collection points based on amount of gold
+-bug: after second pawn move, collect doesn't disappear
+-bug: sometimes can't collect when black
 -end game when winner has enough points
 
 -make undo and load feature
@@ -15,6 +17,7 @@ TODO
 
 -App object overhaul
 
+-don't allow captures on first turn
 -build stat window for selected piece
 -create hot keys
 -enable special moves for within castle

@@ -32,6 +32,7 @@ class App:
     checkMultiplier = {"white": 1, "black": 1}
     resrcboard = None
     menu = None
+    ex_butt = None
     selected_piece = None
     color_turn = None
     second_move = False
@@ -49,7 +50,8 @@ class App:
         pygame.init()
         self.scoreboard = Scoreboard(1)
         self.resrcboard = ResourceBoard(6)
-        self.menu = Menu()
+        self.menu = Menu(1040, 400)
+        self.ex_butt = Menu(1040, 675)
         self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
         pygame.display.set_caption('Chesterman Demo')
         self._running = True
@@ -224,6 +226,7 @@ class App:
         self.scoreboard.draw(self._display_surf)
         self.resrcboard.draw(self._display_surf)
         if(self.menu.exists()): self.menu.draw(self._display_surf)
+        if(self.ex_butt.exists()): self.ex_butt.draw(self._display_surf)
         pygame.display.flip()
 
     def on_cleanup(self):
@@ -277,6 +280,7 @@ class App:
         if self.on_init() == False:
             self._running = False
 
+        self.ex_butt.createExButton()
         #run game
         while( self._running ):
             ev = pygame.event.get()
@@ -290,6 +294,14 @@ class App:
 
                     #set break conditions
                     done_round = False
+
+#HANDLE EXCHANGE BUTTON
+                    selected_option = self.ex_butt.grabClick(pos[0], pos[1])
+                    if(selected_option):
+                        opt_obj = selected_option.clicked(self.map)
+                        if(opt_obj["func"] == "exchange"):
+                            done_round = True
+                            self.menu.createExMenu()
 
 #HANDLE MENUS
                     if(self.menu.exists()):
@@ -306,6 +318,15 @@ class App:
                                 else:
                                     self.menu.createPrompt("Invalid Move.")
                                     done_round = False
+                            elif(opt_obj["func"] == "exchange"):
+                                choice = opt_obj["choice"]
+                                if(self.resrcboard.get(self.color_turn, choice) >= 5):
+                                    if(choice == 'gold'):
+                                        self.resrcboard.increaseResource(self.color_turn, 'gold', -5)
+                                        self.scoreboard.increaseCollectionPoints(self.color_turn, 50)
+                                    else:
+                                        self.resrcboard.increaseResource(self.color_turn, choice, -5)
+                                        self.resrcboard.increaseResource(self.color_turn, 'gold', 1)
                             elif(opt_obj["func"] == "end"):
                                 self.moves = []
                                 self.captures = []

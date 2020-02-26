@@ -13,7 +13,9 @@ class Menu:
     doesExist = False
     kind = None
 
-    def __init__(self):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
         self.update()
 
     def update(self):
@@ -31,7 +33,7 @@ class Menu:
                 i += 1
                 self.popupSurf.blit(textSurf, textRect)
         self.popupRect = self.popupSurf.get_rect()
-        self.popupRect.midleft = (1040, 400)
+        self.popupRect.midleft = (self.x, self.y)
 
     def create(self):
         self.doesExist = True
@@ -57,6 +59,16 @@ class Menu:
     def createEndMenu(self):
         self.create()
         self.options = EndOptions()
+        self.update()
+
+    def createExButton(self):
+        self.create()
+        self.options = ExButton()
+        self.update()
+
+    def createExMenu(self):
+        self.create()
+        self.options = ExMenu()
         self.update()
 
     def createPrompt(self, string):
@@ -184,6 +196,36 @@ class EndOptions(Options):
 
     def clicked(self, string):
         return {"func": "end"}
+
+class ExMenu(Options):
+
+    options = ['hay', 'stone', 'crop', 'gold']
+    kind = "Exchange"
+
+    def __init__(self):
+        pass
+
+    def stringify(self, option):
+        if(option == 'gold'):
+            return '5 gold -> 50 pnts'
+        return '5 '+option+' -> 1 gold'
+
+    def clicked(self, string):
+        return {
+            "func": "exchange",
+            "choice": self.selected_option
+        }
+
+class ExButton(Options):
+
+    options = ['Exchange']
+    kind = "ExButton"
+
+    def __init__(self):
+        pass
+
+    def clicked(self, string):
+        return {"func": "exchange"}
 
 
 class Prompt(Options):
