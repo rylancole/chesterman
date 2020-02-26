@@ -16,3 +16,12 @@ def init():
 
     global HEIGHT
     HEIGHT = 8
+
+    global COST_DICT
+    COST_DICT = {
+        "Queen": (3, "gold"),
+        "Rook": (3, "stone"),
+        "Knight": (3, "hay"),
+        "Bishop": (1, "gold"),
+        "Pawn": (3, "crop")
+    }

@@ -4,6 +4,8 @@ import settings
 STEP_SIZE = settings.STEP_SIZE
 CHUNK_SIZE = settings.CHUNK_SIZE
 
+COST_DICT = settings.COST_DICT
+
 class Menu:
 
     options = None
@@ -70,6 +72,9 @@ class Menu:
         self.options.addPrompt(string)
         self.update()
 
+    def isPrompt(self):
+        return self.options.getKind() == "Prompt"
+
     def createKind(self, piece):
         self.create()
         self.kind = piece.getKind()
@@ -87,19 +92,28 @@ class Menu:
 class Options():
 
     options = []
-    pre_string = ""
+    costs = COST_DICT
+    use_cost = False
 
     def __init__(self, piece):
-        pass
+        if(piece.getKind() != self.kind):
+            return
+        self.piece = piece
 
     def iter(self):
         return self.options
 
-    def stringify(self, string):
-        return self.pre_string+string
+    def stringify(self, option):
+        if(self.use_cost):
+            cost = self.costs[option]
+            return option+" for "+str(cost[0])+" "+cost[1]
+        return option
 
     def size(self):
         return len(self.options)
+
+    def getKind(self):
+        return self.kind
 
     def clicked(self, map):
         return {"func": None}
@@ -109,65 +123,49 @@ class KingOptions(Options):
 
     options = ['Queen', 'Rook', 'Bishop', 'Knight', 'Pawn']
     selected_option = None
-    pre_string = "Create "
-
-    def __init__(self, piece):
-        if(piece.getKind() != "King"):
-            return
-        self.piece = piece
+    use_cost = True
+    kind = "King"
 
     def clicked(self, map):
-        return {"func": "create", "choice": self.selected_option}
+        return {
+            "func": "create",
+            "choice": self.selected_option,
+            "cost": self.costs[self.selected_option]
+            }
 
 class QueenOptions(Options):
 
     options = []
-
-    def __init__(self, piece):
-        if(piece.getKind() != "Queen"):
-            return
-        self.piece = piece
+    kind = "Queen"
 
 class RookOptions(Options):
 
     options = []
-
-    def __init__(self, piece):
-        if(piece.getKind() != "Rook"):
-            return
-        self.piece = piece
+    kind = "Rook"
 
 class KnightOptions(Options):
 
     options = []
-
-    def __init__(self, piece):
-        if(piece.getKind() != "Knight"):
-            return
-        self.piece = piece
+    kind = "Knight"
 
 class BishopOptions(Options):
 
     options = ['Knight', 'Pawn']
     selected_option = None
-    pre_string = "Create "
-
-    def __init__(self, piece):
-        if(piece.getKind() != "Bishop"):
-            return
-        self.piece = piece
+    use_cost = True
+    kind = "Bishop"
 
     def clicked(self, map):
-        return {"func": "create", "choice": self.selected_option}
+        return {
+            "func": "create",
+            "choice": self.selected_option,
+            "cost": self.costs[self.selected_option]-1
+            }
 
 class PawnOptions(Options):
 
     options = ['Collect']
-
-    def __init__(self, piece):
-        if(piece.getKind() != "Pawn"):
-            return
-        self.piece = piece
+    kind = "Pawn"
 
     def clicked(self, map):
         x, y = self.piece.getSquare()
@@ -179,6 +177,7 @@ class PawnOptions(Options):
 class EndOptions(Options):
 
     options = ['End Turn']
+    kind = "End"
 
     def __init__(self):
         pass
@@ -190,6 +189,7 @@ class EndOptions(Options):
 class Prompt(Options):
 
     options = ['']
+    kind = "Prompt"
 
     def __init__(self, string):
         self.options[0] = string

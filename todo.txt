@@ -1,8 +1,9 @@
 TODO
 
--put resource restraints on revivals
--enable gold
-    -collection points
+-enable gold exchange
+    -create exchange button
+    -clicking this opens exchange menu
+    -collection points based on amount of gold
 -end game when winner has enough points
 
 -make undo and load feature
@@ -21,3 +22,4 @@ TODO
     -increased revival drop points
 -enable stalemate
 -consider lumber and ports
+-change all keys to lower

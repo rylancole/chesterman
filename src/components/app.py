@@ -51,7 +51,7 @@ class App:
         self.resrcboard = ResourceBoard(6)
         self.menu = Menu()
         self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
-        pygame.display.set_caption('Chesterman')
+        pygame.display.set_caption('Chesterman Demo')
         self._running = True
         self._back_surf = pygame.image.load(MAP_PATH+".png").convert()
         self._white_turn = pygame.image.load("sprites/white_turn_.png").convert()
@@ -300,37 +300,23 @@ class App:
                             if(opt_obj["func"] == None):
                                 done_round = False
                             elif(opt_obj["func"] == "create"):
-                                self.creation(opt_obj["choice"])
-                            elif(opt_obj["func"] == "build"):
-                                print("Build a wall")
-                                self.moves = []
-                                self.captures = []
-                                self.menu.vanish()
-                                self.turnSwitch()
-                            elif(opt_obj["func"] == "energy"):
-                                print("Use energy")
-                                self.moves = []
-                                self.captures = []
-                                self.menu.vanish()
-                                self.turnSwitch()
+                                cost, cost_resrc = opt_obj["cost"]
+                                if(self.resrcboard.get(self.color_turn, cost_resrc) >= cost):
+                                    self.creation(opt_obj["choice"])
+                                else:
+                                    self.menu.createPrompt("Invalid Move.")
+                                    done_round = False
                             elif(opt_obj["func"] == "end"):
                                 self.moves = []
                                 self.captures = []
                                 self.menu.vanish()
                                 self.turnSwitch()
                             elif(opt_obj["func"] == "collect"):
-                                self.resrcboard.increaseResource(
-                                    self.color_turn,
-                                    opt_obj["resrc"],
-                                    1
-                                )
+                                self.resrcboard.increaseResource(self.color_turn, opt_obj["resrc"], 1)
                                 self.moves = []
                                 self.captures = []
                                 self.menu.vanish()
                                 self.turnSwitch()
-
-
-
 
                     #convert mouse position into unit [SQpixels]
                     x = pos[0] - pos[0]%STEP_SIZE
@@ -369,6 +355,7 @@ class App:
                                     self.selected_piece.moveTo(move.getSQpixels())
                                 elif(move.getType() == "drop"):
                                     self.pieces.append(move.getPiece())
+                                    self.resrcboard.increaseResource(self.color_turn, cost_resrc, -cost)
                                     dropped_piece = True
 
                                 if(self.getPiece(self.color_turn, "King").isInCheck(self.pieces, self.map)):
@@ -424,7 +411,8 @@ class App:
                             self.moves = []
                             self.captures = []
                             if(not self.moved_already):
-                                self.menu.vanish()
+                                if(not self.menu.isPrompt()):
+                                    self.menu.vanish()
                             else:
                                 self.menu.createEndMenu()
 

@@ -29,6 +29,9 @@ class Board:
         textRect.midleft = midleft
         return textSurface, textRect
 
+    def get(self, team, resrc):
+        return self.dict[team][resrc]
+
     def increaseResource(self, team, resrc, amt):
         self.dict[team][resrc] += amt
 
@@ -39,7 +42,7 @@ class Board:
         for color_key in self.dict:
             y = STEP_SIZE*(CHUNK_SIZE+self.h)+STEP_SIZE
             for resrc_key in self.dict[color_key]:
-                s, r = self.text_objects("  "+resrc_key+": "+str(self.dict[color_key][resrc_key]), self.text_font, (x,y))
+                s, r = self.text_objects("  "+resrc_key.capitalize()+": "+str(self.dict[color_key][resrc_key]), self.text_font, (x,y))
                 surface.blit(s, r)
                 y += STEP_SIZE
             x += x_inc
@@ -69,7 +72,7 @@ class Scoreboard(Board):
 class ResourceBoard(Board):
 
     dict_list = [
-        "Hay", "Crop", "Stone", "Gold"
+        "hay", "crop", "stone", "gold"
     ]
     dict = {}
 
@@ -106,9 +109,9 @@ class Map:
             return self.matrix[y][x]
 
         dict = {
-            "s": "Stone",
-            "f": "Hay",
-            "c": "Crop"
+            "s": "stone",
+            "f": "hay",
+            "c": "crop"
         }
 
         return dict[self.matrix[y][x]]
