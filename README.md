@@ -16,4 +16,4 @@ Checkout the /Document/ directory for information on the rules
 
 # Summary
 
-A Catan-inspired game that utilizes chess mechanics. Use regular chess pieces to move around a modified chess board trying to put your opponent into check mate or capture their pieces. Pawns can collect resources dependant on where there are on the board and those resources can be used to create other pieces.
+Proof of Concept for a Catan-inspired game that utilizes chess mechanics. Use regular chess pieces to move around a modified chess board trying to put your opponent into check mate or capture their pieces. Pawns can collect resources dependant on where there are on the board and those resources can be used to create other pieces.
