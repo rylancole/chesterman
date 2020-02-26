@@ -11,6 +11,7 @@ Capture:
 
 Collection:
     Collects 1 of any resource from the land it is standing on
+    Only allowed every other turn
 
 Double Move:
     If a pawn is moved as your action (and doesn't not put your opponent in check),

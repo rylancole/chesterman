@@ -29,6 +29,7 @@ class App:
     castles = {}
     moves = []
     captures = []
+    can_coll = {'white': True, 'black': True}
     map = Map()
     scoreboard = None
     checkMultiplier = {"white": 1, "black": 1}
@@ -211,6 +212,10 @@ class App:
             return "white"
 
     def turnSwitch(self):
+        if(self.can_coll[self.color_turn] == None):
+            self.can_coll[self.color_turn] = False
+        elif(self.can_coll[self.color_turn] == False):
+            self.can_coll[self.color_turn] = True
         opp_king = self.getPiece(self.notColor(self.color_turn), "King")
         if(opp_king.isInCheck(self.pieces, self.map)):
             if(opp_king.isInCheckMate(self.pieces, self.map)):
@@ -303,6 +308,7 @@ class App:
                                 self.turnSwitch()
                             elif(opt_obj["func"] == "collect"):
                                 self.resrcboard.increaseResource(self.color_turn, opt_obj["resrc"], 1)
+                                self.can_coll[self.color_turn] = None
                                 self.moves = []
                                 self.captures = []
                                 self.menu.vanish()
@@ -389,7 +395,8 @@ class App:
                                 if(piece.getTeam() == self.color_turn):
                                     #choose piece as selected if clicked
                                     self.selected_piece = piece
-                                    self.menu.createKind(piece)
+                                    if(piece.getKind() != "Pawn" or self.can_coll[self.color_turn]):
+                                        self.menu.createKind(piece)
                                     self.moves = []
                                     self.captures = []
                                     #display legal moves and captures of selected piece
