@@ -5,6 +5,7 @@ STEP_SIZE = settings.STEP_SIZE
 CHUNK_SIZE = settings.CHUNK_SIZE
 
 COST_DICT = settings.COST_DICT
+GOLD_WORTH = settings.GOLD_WORTH
 
 class Menu:
 
@@ -105,7 +106,6 @@ class Options():
 
     options = []
     costs = COST_DICT
-    use_cost = False
 
     def __init__(self, piece):
         if(piece.getKind() != self.kind):
@@ -116,9 +116,6 @@ class Options():
         return self.options
 
     def stringify(self, option):
-        if(self.use_cost):
-            cost = self.costs[option]
-            return option+" for "+str(cost[0])+" "+cost[1]
         return option
 
     def size(self):
@@ -135,7 +132,6 @@ class KingOptions(Options):
 
     options = ['Queen', 'Rook', 'Bishop', 'Knight', 'Pawn']
     selected_option = None
-    use_cost = True
     kind = "King"
 
     def clicked(self, map):
@@ -144,6 +140,10 @@ class KingOptions(Options):
             "choice": self.selected_option,
             "cost": self.costs[self.selected_option]
             }
+
+    def stringify(self, option):
+        cost = self.costs[option]
+        return option+" for "+str(cost[0])+" "+cost[1]
 
 class QueenOptions(Options):
 
@@ -174,6 +174,10 @@ class BishopOptions(Options):
             "cost": self.costs[self.selected_option]-1
             }
 
+    def stringify(self, option):
+        cost = self.costs[option]
+        return option+" for "+str(cost[0]-1)+" "+cost[1]
+
 class PawnOptions(Options):
 
     options = ['Collect']
@@ -181,6 +185,7 @@ class PawnOptions(Options):
 
     def clicked(self, map):
         x, y = self.piece.getSquare()
+        # returning the wrong thing here
         if(map.isWaterAt(x, y, True) or map.isCastleAt(x, y) or map.isEmptyAt(x, y)):
             return {"func": None}
         block = map.get(x, y, True)
@@ -207,7 +212,7 @@ class ExMenu(Options):
 
     def stringify(self, option):
         if(option == 'gold'):
-            return '5 gold -> 50 pnts'
+            return '5 gold -> '+str(GOLD_WORTH)+' pnts'
         return '5 '+option+' -> 1 gold'
 
     def clicked(self, string):

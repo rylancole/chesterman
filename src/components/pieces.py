@@ -91,6 +91,15 @@ class GamePiece:
         self.x = self.prev_x
         self.y = self.prev_y
 
+    def isInCheck(self, pieces, map):
+        for piece in pieces:
+            possible_moves, possible_captures = piece.avaliableMoves(pieces, map)
+            for capture in possible_captures:
+                if capture.getKind() == "King" and capture.getTeam() == self.team:
+                    return True
+
+        return False
+
     def getSQpixels(self):
         return (self.x, self.y)
 
@@ -151,15 +160,6 @@ class King(GamePiece):
         moves.extend(self.movesInDirection("southeast", map, pieces, 1))
         moves.extend(self.movesInDirection("southwest", map, pieces, 1))
         return moves, self.captures
-
-    def isInCheck(self, pieces, map):
-        for piece in pieces:
-            possible_moves, possible_captures = piece.avaliableMoves(pieces, map)
-            for capture in possible_captures:
-                if capture.getKind() == "King" and capture.getTeam() == self.team:
-                    return True
-
-        return False
 
     def isInCheckMate(self, pieces, map):
         if(not self.isInCheck(pieces, map)):

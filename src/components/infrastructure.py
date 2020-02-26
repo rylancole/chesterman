@@ -69,6 +69,15 @@ class Scoreboard(Board):
     def updateTotal(self, team):
         self.dict[team]["Tot"] = self.dict[team]["Chk"] + self.dict[team]["Col"] + self.dict[team]["Cap"]
 
+    def getWinner(self):
+        for team in self.dict:
+            if(self.dict[team]["Chk"]>=250
+                or self.dict[team]["Cap"]>=250
+                    or self.dict[team]["Col"]>=250
+                        or self.dict[team]["Tot"]>=600):
+                return team
+        return None
+
 class ResourceBoard(Board):
 
     dict_list = [

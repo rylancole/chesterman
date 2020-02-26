@@ -25,3 +25,6 @@ def init():
         "Bishop": (1, "gold"),
         "Pawn": (3, "crop")
     }
+
+    global GOLD_WORTH
+    GOLD_WORTH = 35

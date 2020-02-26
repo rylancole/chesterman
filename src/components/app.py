@@ -17,6 +17,7 @@ STEP_SIZE = settings.STEP_SIZE
 MAP_PATH = settings.MAP_PATH
 WIDTH = settings.WIDTH
 HEIGHT = settings.HEIGHT
+GOLD_WORTH = settings.GOLD_WORTH
 
 class App:
     '''
@@ -166,10 +167,19 @@ class App:
                         #compare move sprite location to mouse click
                         if move.getSquare() == (x, y):
                             #move selected piece to this move if clicked
-                            if(move.getCorner() == "north"): self.pieces.append(King(self.color_turn, x, y+2, "north"))
-                            elif(move.getCorner() == "south"): self.pieces.append(King(self.color_turn, x, y-2, "south"))
-                            elif(move.getCorner() == "east"): self.pieces.append(King(self.color_turn, x-2, y, "east"))
-                            elif(move.getCorner() == "west"): self.pieces.append(King(self.color_turn, x+2, y, "west"))
+                            corner = move.getCorner()
+                            if(corner == "north"):
+                                self.pieces.append(King(self.color_turn, x, y+2, "north"))
+                                self.map.putCastle(x-2, y)
+                            elif(corner == "south"):
+                                self.pieces.append(King(self.color_turn, x, y-2, "south"))
+                                self.map.putCastle(x-2, y-3)
+                            elif(corner == "east"):
+                                self.pieces.append(King(self.color_turn, x-2, y, "east"))
+                                self.map.putCastle(x-3, y-2)
+                            elif(corner == "west"):
+                                self.pieces.append(King(self.color_turn, x+2, y, "west"))
+                                self.map.putCastle(x, y-2)
 
                             clicked_king = True
 
@@ -182,9 +192,6 @@ class App:
                                 run_setup = False
                             else:
                                 self.menu.changePrompt("Position your castle")
-
-                            self.map.putCastle(x, y)
-
 
                     if(not clicked_king and self.validCastleLocation(x, y)):
                         self.establishCastle(x, y, self.color_turn)
@@ -268,6 +275,13 @@ class App:
         self.second_move = False
         self.moved_already = False
 
+        self.winner = self.scoreboard.getWinner()
+        if(self.winner):
+            print(self.winner+" wins!")
+            self._running = False
+            return
+
+
     def kill(self, capture):
         self.pieces.remove(capture.getPieceObj())
 
@@ -323,7 +337,7 @@ class App:
                                 if(self.resrcboard.get(self.color_turn, choice) >= 5):
                                     if(choice == 'gold'):
                                         self.resrcboard.increaseResource(self.color_turn, 'gold', -5)
-                                        self.scoreboard.increaseCollectionPoints(self.color_turn, 50)
+                                        self.scoreboard.increaseCollectionPoints(self.color_turn, GOLD_WORTH)
                                     else:
                                         self.resrcboard.increaseResource(self.color_turn, choice, -5)
                                         self.resrcboard.increaseResource(self.color_turn, 'gold', 1)
@@ -370,11 +384,15 @@ class App:
                         for move in self.moves:
                             #compare move sprite location to mouse click
                             if move.getSQpixels() == (x, y):
-                                #move selected piece to this move if clicked
                                 dropped_piece = False
                                 if(move.getType() == "move"):
+                                    #move selected piece to this move if clicked
                                     self.selected_piece.moveTo(move.getSQpixels())
-                                elif(move.getType() == "drop"):
+                                elif(move.getType() == "drop"
+                                    and not self.selected_piece.isInCheck(self.pieces, self.map)
+                                    and not self.getPiece(self.color_turn, "King").isInCheck(self.pieces, self.map)):
+                                    # drop new piece to this position if clicked
+                                    # and selected piece nor King are currently in check
                                     self.pieces.append(move.getPiece())
                                     self.resrcboard.increaseResource(self.color_turn, cost_resrc, -cost)
                                     dropped_piece = True
@@ -398,8 +416,11 @@ class App:
                                                 self.menu.createEndMenu()
                                     self.moves = []
                                     self.captures = []
-                                    if(not self.moved_already): self.menu.vanish()
-                                    if(self.second_move): self.turnSwitch()
+                                    if(not self.moved_already):
+                                        self.menu.vanish()
+                                    if(self.second_move):
+                                        self.menu.vanish()
+                                        self.turnSwitch()
                                 done_round = True
 
 

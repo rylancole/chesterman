@@ -1,28 +1,30 @@
 TODO
 
--enable gold exchange
-    -create exchange button
-    -clicking this opens exchange menu
-    -collection points based on amount of gold
--bug: after second pawn move, collect doesn't disappear
--bug: sometimes can't collect when black
--end game when winner has enough points
+
+-create various start-up possibilities to be tested
 
 -make undo and load feature
 -wrap up Chesterman Demo
+-write up piece documents
 
 -enable wall building
 -enable capture protection near knights
 -enable resource boost near queens
 
 -App object overhaul
+-Code commenting
 
 -don't allow captures on first turn
 -build stat window for selected piece
+-build message window for prompts
+    -create more prompts
 -create hot keys
 -enable special moves for within castle
     -rook switch
     -increased revival drop points
 -enable stalemate
 -consider lumber and ports
--change all keys to lower
+-change all keys to lowercase
+-don't allow drops to put anyone in check
+-limit collecting somehow
+-introduce gold economy
