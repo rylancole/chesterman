@@ -21,7 +21,7 @@ class Menu:
             i = 0
             self.option_surfs = {}
             for option in self.options.iter():
-                s = " >"+option
+                s = " >"+self.options.stringify(option)
                 textSurf = self.text_font.render(s, True, (255, 255, 255))
                 textRect = textSurf.get_rect()
                 self.option_surfs[option] = textRect
@@ -87,12 +87,16 @@ class Menu:
 class Options():
 
     options = []
+    pre_string = ""
 
     def __init__(self, piece):
         pass
 
     def iter(self):
         return self.options
+
+    def stringify(self, string):
+        return self.pre_string+string
 
     def size(self):
         return len(self.options)
@@ -105,6 +109,7 @@ class KingOptions(Options):
 
     options = ['Queen', 'Rook', 'Bishop', 'Knight', 'Pawn']
     selected_option = None
+    pre_string = "Create "
 
     def __init__(self, piece):
         if(piece.getKind() != "King"):
@@ -125,32 +130,27 @@ class QueenOptions(Options):
 
 class RookOptions(Options):
 
-    options = ['Build']
+    options = []
 
     def __init__(self, piece):
         if(piece.getKind() != "Rook"):
             return
         self.piece = piece
 
-    def clicked(self, map):
-        return {"func": "build"}
-
 class KnightOptions(Options):
 
-    options = ['Energy']
+    options = []
 
     def __init__(self, piece):
         if(piece.getKind() != "Knight"):
             return
         self.piece = piece
 
-    def clicked(self, map):
-        return {"func": "energy"}
-
 class BishopOptions(Options):
 
     options = ['Knight', 'Pawn']
     selected_option = None
+    pre_string = "Create "
 
     def __init__(self, piece):
         if(piece.getKind() != "Bishop"):

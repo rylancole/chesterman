@@ -249,11 +249,10 @@ class App:
         opp_king = self.getPiece(self.notColor(self.color_turn), "King")
         if(opp_king.isInCheck(self.pieces, self.map)):
             if(opp_king.isInCheckMate(self.pieces, self.map)):
-                self._running = False
-                self.annouceWinner(self.color_turn)
-                return
-            self.scoreboard.increaseCheckPoints(self.color_turn, 5*self.checkMultiplier[self.color_turn])
-            self.checkMultiplier[self.color_turn] += 1
+                self.scoreboard.increaseCheckPoints(self.color_turn, 250)
+            else:
+                self.scoreboard.increaseCheckPoints(self.color_turn, 5*self.checkMultiplier[self.color_turn])
+                self.checkMultiplier[self.color_turn] += 1
         else:
             self.checkMultiplier[self.color_turn] = 1
 
@@ -365,13 +364,16 @@ class App:
                             #compare move sprite location to mouse click
                             if move.getSQpixels() == (x, y):
                                 #move selected piece to this move if clicked
+                                dropped_piece = False
                                 if(move.getType() == "move"):
                                     self.selected_piece.moveTo(move.getSQpixels())
                                 elif(move.getType() == "drop"):
                                     self.pieces.append(move.getPiece())
+                                    dropped_piece = True
 
                                 if(self.getPiece(self.color_turn, "King").isInCheck(self.pieces, self.map)):
                                     self.selected_piece.undoMove()
+                                    if(dropped_piece): self.pieces.remove(move.getPiece())
                                     self.menu.createPrompt("Invalid move")
                                 else:
                                     if(self.selected_piece.getKind() != "Pawn"):

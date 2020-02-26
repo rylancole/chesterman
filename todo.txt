@@ -1,9 +1,8 @@
 TODO
 
--change checkmate to give 250 points
+-put resource restraints on revivals
 -enable gold
     -collection points
--put resource restraints on revivals
 -end game when winner has enough points
 
 -make undo and load feature
