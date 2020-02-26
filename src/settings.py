@@ -28,3 +28,10 @@ def init():
 
     global GOLD_WORTH
     GOLD_WORTH = 35
+
+    global LOAD_VERSION
+    LOAD_VERSION = 1 # every piece
+    # LOAD_VERSION = 2 # just rook
+    # LOAD_VERSION = 3 # just knight
+    # LOAD_VERSION = 4 # queen, rook, knight
+    # LOAD_VERSION = 5 # bishop, rook, knight

@@ -1,9 +1,7 @@
 TODO
 
-
--create various start-up possibilities to be tested
-
 -make undo and load feature
+-create various start-up possibilities to be tested
 -wrap up Chesterman Demo
 -write up piece documents
 

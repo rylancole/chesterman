@@ -5,6 +5,7 @@ import time
 
 import components.pieces as pieces
 from components.pieces import *
+from components.pieceloader import PieceLoader
 from components.chunkmap import ChunkMap
 from components.moves import *
 from components.infrastructure import *
@@ -88,54 +89,8 @@ class App:
 
     def loadPieces(self, team):
         king = self.getPiece(team, "King")
-        x, y = king.getSquare()
-        corner = king.getCorner()
-
-        if(corner == "north" or corner == "south"):
-            self.pieces.append(Queen(team, x-1, y))
-            self.pieces.append(Bishop(team, x+1, y))
-            self.pieces.append(Bishop(team, x-2, y))
-        elif(corner == "east" or corner == "west"):
-            self.pieces.append(Queen(team, x, y-1))
-            self.pieces.append(Bishop(team, x, y+1))
-            self.pieces.append(Bishop(team, x, y-2))
-
-        if(corner == "north"):
-            self.pieces.append(Rook(team, x, y+1))
-            self.pieces.append(Rook(team, x-1, y+1))
-            self.pieces.append(Knight(team, x+1, y+1))
-            self.pieces.append(Knight(team, x-2, y+1))
-            self.pieces.append(Pawn(team, x, y-1))
-            self.pieces.append(Pawn(team, x-1, y-1))
-            self.pieces.append(Pawn(team, x+1, y-1))
-            self.pieces.append(Pawn(team, x-2, y-1))
-        elif(corner == "south"):
-            self.pieces.append(Rook(team, x, y-1))
-            self.pieces.append(Rook(team, x-1, y-1))
-            self.pieces.append(Knight(team, x+1, y-1))
-            self.pieces.append(Knight(team, x-2, y-1))
-            self.pieces.append(Pawn(team, x, y+1))
-            self.pieces.append(Pawn(team, x-1, y+1))
-            self.pieces.append(Pawn(team, x+1, y+1))
-            self.pieces.append(Pawn(team, x-2, y+1))
-        elif(corner == "west"):
-            self.pieces.append(Rook(team, x+1, y))
-            self.pieces.append(Rook(team, x+1, y-1))
-            self.pieces.append(Knight(team, x+1, y+1))
-            self.pieces.append(Knight(team, x+1, y-2))
-            self.pieces.append(Pawn(team, x-1, y))
-            self.pieces.append(Pawn(team, x-1, y-1))
-            self.pieces.append(Pawn(team, x-1, y+1))
-            self.pieces.append(Pawn(team, x-1, y-2))
-        elif(corner == "east"):
-            self.pieces.append(Rook(team, x-1, y))
-            self.pieces.append(Rook(team, x-1, y-1))
-            self.pieces.append(Knight(team, x-1, y+1))
-            self.pieces.append(Knight(team, x-1, y-2))
-            self.pieces.append(Pawn(team, x+1, y))
-            self.pieces.append(Pawn(team, x+1, y-1))
-            self.pieces.append(Pawn(team, x+1, y+1))
-            self.pieces.append(Pawn(team, x+1, y-2))
+        loader = PieceLoader()
+        loader.loadPieces(king, self.pieces)
 
     def on_setup(self):
         self.color_turn = "black"
