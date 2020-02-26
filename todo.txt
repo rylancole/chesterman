@@ -1,13 +1,13 @@
 TODO
 
--make undo and load feature
--create various start-up possibilities to be tested
+
 -wrap up Chesterman Demo
 -write up piece documents
 
 -enable wall building
 -enable capture protection near knights
 -enable resource boost near queens
+-make turn confirmations
 
 -App object overhaul
 -Code commenting
@@ -24,5 +24,6 @@ TODO
 -consider lumber and ports
 -change all keys to lowercase
 -don't allow drops to put anyone in check
--limit collecting somehow
+-limit collecting somehow and nerf pawn's double move
 -introduce gold economy
+-don't let castles be too close
