@@ -123,7 +123,7 @@ class King(GamePiece):
     _black_image_path = "sprites/black_king_20x20.png"
     captures = []
 
-    def __init__(self, team, x, y, corner):
+    def __init__(self, team, x, y, corner=""):
         #store move coordinates in unit [SQpixels]
         self.x = x*STEP_SIZE
         self.y = y*STEP_SIZE
@@ -160,6 +160,28 @@ class King(GamePiece):
                     return True
 
         return False
+
+    def isInCheckMate(self, pieces, map):
+        if(not self.isInCheck(pieces, map)):
+            return False
+
+        moves, captures = self.avaliableMoves(pieces, map)
+
+        for move in moves:
+            self.moveTo(move)
+            if(not self.isInCheck(pieces, map)):
+                self.undoMove()
+                return False
+            self.undoMove()
+
+        for cap in captures:
+            self.moveTo(cap.getSquare())
+            if(not self.isInCheck(pieces, map)):
+                self.undoMove()
+                return False
+            self.undoMove()
+
+        return True
 
 
 class Queen(GamePiece):

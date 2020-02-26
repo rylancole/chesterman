@@ -138,7 +138,7 @@ class App:
         self.color_turn = "black"
         run_setup = True
 
-        self.menu.createPrompt("Place your castle")
+        self.menu.createPrompt("Position your castle")
 
         while( run_setup ):
             ev = pygame.event.get()
@@ -179,14 +179,15 @@ class App:
                                 self.menu.vanish()
                                 run_setup = False
                             else:
-                                self.menu.changePrompt("Place your castle")
+                                self.menu.changePrompt("Position your castle")
 
                             self.map.putCastle(x, y)
 
 
                     if(not clicked_king and self.validCastleLocation(x, y)):
                         self.establishCastle(x, y, self.color_turn)
-                        self.menu.changePrompt("Choose a direction")
+                        self.menu.changePrompt("Reposition your castle")
+                        self.menu.addPrompt("OR choose a direction")
 
                 #handle exit button being clicked
                 if event.type == pygame.QUIT:
@@ -234,19 +235,18 @@ class App:
         for drop in possible_drops:
             self.moves.append(LegalDrop(drop, self.color_turn, choice))
 
-    def anyKingInCheck(self):
-        for piece in self.pieces:
-            possible_moves, possible_captures = piece.avaliableMoves(self.pieces, self.map)
-            for capture in possible_captures:
-                if capture.getKind() == "King":
-                    return True
-
-        return False
+    def annouceWinner(self, winner):
+        self.menu.createPrompt(winner+" wins!")
+        time.sleep(5)
 
     def turnSwitch(self):
         if(self.color_turn == "white"):
             opp_king = self.getPiece("black", "King")
             if(opp_king.isInCheck(self.pieces, self.map)):
+                if(opp_king.isInCheckMate(self.pieces, self.map)):
+                    self._running = False
+                    self.annouceWinner("white")
+                    return
                 self.scoreboard.increaseCheckPoints("white", 5*self.checkMultiplier["white"])
                 self.checkMultiplier["white"] += 1
             else:
@@ -257,6 +257,10 @@ class App:
         else:
             opp_king = self.getPiece("white", "King")
             if(opp_king.isInCheck(self.pieces, self.map)):
+                if(opp_king.isInCheckMate(self.pieces, self.map)):
+                    self._running = False
+                    self.annouceWinner("black")
+                    return
                 self.scoreboard.increaseCheckPoints("black", 5*self.checkMultiplier["black"])
                 self.checkMultiplier["black"] += 1
             else:
@@ -351,9 +355,8 @@ class App:
                                     self.moves = []
                                     self.captures = []
                                     self.menu.vanish()
-                                    done_round = True
-
                                     self.turnSwitch()
+                                done_round = True
 
 #HANDLE MOVING
                     #check to see if a move was clicked
@@ -381,9 +384,9 @@ class App:
                                     self.moves = []
                                     self.captures = []
                                     self.menu.vanish()
-                                    done_round = True
-
                                     if(self.second_move): self.turnSwitch()
+                                done_round = True
+
 
 #HANDLE PIECE SELECTION
                     #check to see if a piece was clicked

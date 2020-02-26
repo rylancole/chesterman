@@ -16,7 +16,7 @@ class Menu:
 
     def update(self):
         self.text_font = pygame.font.Font('freesansbold.ttf',int((3/4)*STEP_SIZE))
-        self.popupSurf = pygame.Surface((STEP_SIZE*CHUNK_SIZE*2, STEP_SIZE*CHUNK_SIZE*2))
+        self.popupSurf = pygame.Surface((STEP_SIZE*CHUNK_SIZE*3, STEP_SIZE*CHUNK_SIZE*2))
         if(self.options):
             i = 0
             self.option_surfs = {}
@@ -59,6 +59,10 @@ class Menu:
 
     def changePrompt(self, string):
         self.options.changePrompt(string)
+        self.update()
+
+    def addPrompt(self, string):
+        self.options.addPrompt(string)
         self.update()
 
     def createKind(self, piece):
@@ -175,4 +179,7 @@ class Prompt(Options):
         self.options[0] = string
 
     def changePrompt(self, string):
-        self.options[0] = string
+        self.options = [string]
+
+    def addPrompt(self, string):
+        self.options.append(string)

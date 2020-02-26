@@ -1,16 +1,16 @@
 TODO
 
--change king moves to look for checks
-    -give check points
--enable check mate
+-fix win sequence
+-allow pawn second move to end turn
+    -force end turn on checkmate
 -enable gold
     -collection points
 -put resource restraints on revivals
--enable wall building
 
 -make undo and load feature
 -wrap up Chesterman Demo
 
+-enable wall building
 -enable capture protection near knights
 -enable resource boost near queens
 
@@ -21,3 +21,5 @@ TODO
 -enable special moves for within castle
     -rook switch
     -increased revival drop points
+-enable stalemate
+-consider lumber and ports
