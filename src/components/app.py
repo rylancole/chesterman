@@ -37,9 +37,11 @@ class App:
     menu = None
     ex_butt = None
     selected_piece = None
+    prev_piece = None
     color_turn = None
     second_move = False
     moved_already = False
+    turn_number = 0
 
     def __init__(self, w, h):
         self._running = True
@@ -71,6 +73,10 @@ class App:
             for j in range(y, y+4):
                 if(self.map.isWaterAt(i*STEP_SIZE, j*STEP_SIZE) or self.map.isCastleAt(i, j)):
                     return False
+        for i in range(x-3, x+7):
+            for j in range(y-3, y+7):
+                if(self.map.isCastleAt(i, j)):
+                    return False
         return True
 
     def establishCastle(self, x, y, team):
@@ -89,9 +95,14 @@ class App:
         return None
 
     def loadPieces(self, team):
-        king = self.getPiece(team, "King")
+        king = self.getPiece(team, "king")
         loader = PieceLoader()
         loader.loadPieces(king, self.pieces)
+
+    def stealGold(self, team):
+        if(self.resrcboard.get(self.notColor(team), "gold") > 0):
+            self.resrcboard.increaseResource(self.notColor(team), "gold", -1)
+            self.resrcboard.increaseResource(team, "gold", 1)
 
     def on_setup(self):
         self.color_turn = "black"
@@ -124,18 +135,19 @@ class App:
                         if move.getSquare() == (x, y):
                             #move selected piece to this move if clicked
                             corner = move.getCorner()
+                            team = self.color_turn
                             if(corner == "north"):
-                                self.pieces.append(King(self.color_turn, x, y+2, "north"))
-                                self.map.putCastle(x-2, y)
+                                self.pieces.append(King(team, x, y+2, "north"))
+                                self.map.putCastle(team, x-2, y)
                             elif(corner == "south"):
-                                self.pieces.append(King(self.color_turn, x, y-2, "south"))
-                                self.map.putCastle(x-2, y-3)
+                                self.pieces.append(King(team, x, y-2, "south"))
+                                self.map.putCastle(team, x-2, y-3)
                             elif(corner == "east"):
-                                self.pieces.append(King(self.color_turn, x-2, y, "east"))
-                                self.map.putCastle(x-3, y-2)
+                                self.pieces.append(King(team, x-2, y, "east"))
+                                self.map.putCastle(team, x-3, y-2)
                             elif(corner == "west"):
-                                self.pieces.append(King(self.color_turn, x+2, y, "west"))
-                                self.map.putCastle(x, y-2)
+                                self.pieces.append(King(team, x+2, y, "west"))
+                                self.map.putCastle(team, x, y-2)
 
                             clicked_king = True
 
@@ -199,7 +211,9 @@ class App:
         self.moves = []
         possible_drops = self.selected_piece.avaliableDropPoints(self.pieces, self.map)
         for drop in possible_drops:
-            self.moves.append(LegalDrop(drop, self.color_turn, choice))
+            legal_drop = LegalDrop(drop, self.color_turn, choice)
+            if(not legal_drop.checksKing(self.notColor(self.color_turn), self.pieces, self.map)):
+                self.moves.append(legal_drop)
 
     def annouceWinner(self, winner):
         self.menu.createPrompt(winner+" wins!")
@@ -212,11 +226,15 @@ class App:
             return "white"
 
     def turnSwitch(self):
+        self.turn_number += 1
+        self.prev_piece = self.selected_piece
+        if(self.selected_piece and self.selected_piece.getKind() == "knight" and self.selected_piece.onColorCastle(self.map, self.notColor(self.color_turn))):
+            self.stealGold(self.color_turn)
         if(self.can_coll[self.color_turn] == None):
             self.can_coll[self.color_turn] = False
         elif(self.can_coll[self.color_turn] == False):
             self.can_coll[self.color_turn] = True
-        opp_king = self.getPiece(self.notColor(self.color_turn), "King")
+        opp_king = self.getPiece(self.notColor(self.color_turn), "king")
         if(opp_king.isInCheck(self.pieces, self.map)):
             if(opp_king.isInCheckMate(self.pieces, self.map)):
                 self.scoreboard.increaseCheckPoints(self.color_turn, 250)
@@ -241,6 +259,23 @@ class App:
             self._running = False
             return
 
+    def convert(self, bishop, pawn):
+        b_coord = bishop.getSQpixels()
+        p_coord = pawn.getSQpixels()
+
+        bishop.moveTo(p_coord)
+        pawn.moveTo(b_coord)
+
+        pawn.changeTeam(bishop.getTeam())
+
+    def unconvert(self, bishop, pawn):
+        b_coord = bishop.getSQpixels()
+        p_coord = pawn.getSQpixels()
+
+        bishop.moveTo(p_coord)
+        pawn.moveTo(b_coord)
+
+        pawn.changeTeam(self.notColor(bishop.getTeam()))
 
     def kill(self, capture):
         self.pieces.remove(capture.getPieceObj())
@@ -290,7 +325,7 @@ class App:
                                 if(self.resrcboard.get(self.color_turn, cost_resrc) >= cost):
                                     self.creation(opt_obj["choice"])
                                 else:
-                                    self.menu.createPrompt("Invalid Move.")
+                                    self.menu.createPrompt("Invalid Move. Not enough "+cost_resrc)
                                     done_round = False
                             elif(opt_obj["func"] == "exchange"):
                                 choice = opt_obj["choice"]
@@ -325,12 +360,18 @@ class App:
                             #compare move sprite location to mouse click
                             if capture.getSQpixels() == (x, y):
                                 #move selected piece into capture is clicked
-                                self.kill(capture)
+                                if(self.selected_piece.getKind() == "bishop" and capture.getPieceObj().getKind() == "pawn"):
+                                    self.convert(self.selected_piece, capture.getPieceObj())
+                                    converted = True
+                                else:
+                                    self.kill(capture)
+                                    converted = False
                                 self.selected_piece.moveTo(capture.getSQpixels())
-                                if(self.getPiece(self.color_turn, "King").isInCheck(self.pieces, self.map)):
+                                if(self.getPiece(self.color_turn, "king").isInCheck(self.pieces, self.map)):
                                     self.selected_piece.undoMove()
-                                    self.unkill(capture)
-                                    self.menu.createPrompt("Invalid move")
+                                    if(converted): self.unconvert(capture.getPieceObj())
+                                    else: self.unkill(capture)
+                                    self.menu.createPrompt("Invalid move. That puts you in check")
                                 else:
                                     capture.capturedBy(self.selected_piece, self.scoreboard)
                                     self.moves = []
@@ -338,6 +379,7 @@ class App:
                                     self.menu.vanish()
                                     self.turnSwitch()
                                 done_round = True
+                                self.prev_piece = self.selected_piece
 
 #HANDLE MOVING
                     #check to see if a move was clicked
@@ -351,25 +393,25 @@ class App:
                                     self.selected_piece.moveTo(move.getSQpixels())
                                 elif(move.getType() == "drop"
                                     and not self.selected_piece.isInCheck(self.pieces, self.map)
-                                    and not self.getPiece(self.color_turn, "King").isInCheck(self.pieces, self.map)):
+                                    and not self.getPiece(self.color_turn, "king").isInCheck(self.pieces, self.map)):
                                     # drop new piece to this position if clicked
                                     # and selected piece nor King are currently in check
                                     self.pieces.append(move.getPiece())
                                     self.resrcboard.increaseResource(self.color_turn, cost_resrc, -cost)
                                     dropped_piece = True
 
-                                if(self.getPiece(self.color_turn, "King").isInCheck(self.pieces, self.map)):
+                                if(self.getPiece(self.color_turn, "king").isInCheck(self.pieces, self.map)):
                                     self.selected_piece.undoMove()
                                     if(dropped_piece): self.pieces.remove(move.getPiece())
-                                    self.menu.createPrompt("Invalid move")
+                                    self.menu.createPrompt("Invalid move. You are in check.")
                                 else:
-                                    if(self.selected_piece.getKind() != "Pawn"):
+                                    if(self.selected_piece.getKind() != "pawn"):
                                         self.second_move = True
                                     else:
                                         if(self.moved_already):
                                             self.second_move = True
                                         else:
-                                            opp_king = self.getPiece(self.notColor(self.color_turn), "King")
+                                            opp_king = self.getPiece(self.notColor(self.color_turn), "king")
                                             if(opp_king.isInCheck(self.pieces, self.map)):
                                                 self.second_move = True
                                             else:
@@ -383,19 +425,20 @@ class App:
                                         self.menu.vanish()
                                         self.turnSwitch()
                                 done_round = True
+                                self.prev_piece = self.selected_piece
 
 
 #HANDLE PIECE SELECTION
                     #check to see if a piece was clicked
                     if(not done_round):
                         for piece in self.pieces:
-                            if self.moved_already and piece.getKind() != "Pawn":
+                            if self.moved_already and (piece.getKind() != "pawn" or piece == self.prev_piece):
                                 pass
                             elif piece.getSQpixels() == (x, y):
                                 if(piece.getTeam() == self.color_turn):
                                     #choose piece as selected if clicked
                                     self.selected_piece = piece
-                                    if(piece.getKind() != "Pawn" or self.can_coll[self.color_turn]):
+                                    if(piece.getKind() != "pawn" or (self.can_coll[self.color_turn] and not self.moved_already)):
                                         self.menu.createKind(piece)
                                     self.moves = []
                                     self.captures = []
@@ -403,8 +446,9 @@ class App:
                                     possible_moves, possible_captures = piece.avaliableMoves(self.pieces, self.map)
                                     for move in possible_moves:
                                         self.moves.append(LegalMove(move))
-                                    for capture in possible_captures:
-                                        self.captures.append(LegalCapture(capture))
+                                    if(not self.moved_already and self.turn_number > 1):
+                                        for capture in possible_captures:
+                                            self.captures.append(LegalCapture(capture))
                                 done_round = True
                                 break
 
@@ -426,7 +470,6 @@ class App:
 
             #re-render app after handling clicks
             self.on_render()
-
 
             time.sleep (50.0 / 1000.0)
 

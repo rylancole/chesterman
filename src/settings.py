@@ -9,7 +9,11 @@ def init():
     ISLAND_SIZE = 75
 
     global MAP_PATH
-    MAP_PATH = "maps/map1"
+    # MAP_PATH = "maps/map1"
+    MAP_PATH = "maps/map2"
+    # MAP_PATH = "maps/map3"
+    # MAP_PATH = "maps/map4"
+    # MAP_PATH = "maps/map5"
 
     global WIDTH
     WIDTH = 13
@@ -19,11 +23,12 @@ def init():
 
     global COST_DICT
     COST_DICT = {
-        "Queen": (3, "gold"),
-        "Rook": (3, "stone"),
-        "Knight": (3, "hay"),
-        "Bishop": (1, "gold"),
-        "Pawn": (3, "crop")
+        "queen": (3, "gold"),
+        "rook": (3, "stone"),
+        "knight": (3, "hay"),
+        "bishop": (1, "gold"),
+        "pawn": (3, "crop"),
+        "wall": (1, "stone")
     }
 
     global GOLD_WORTH

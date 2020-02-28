@@ -86,17 +86,17 @@ class Menu:
         self.update()
 
     def isPrompt(self):
-        return self.options.getKind() == "Prompt"
+        return self.options.getKind() == "prompt"
 
     def createKind(self, piece):
         self.create()
         self.kind = piece.getKind()
-        if(self.kind == "King"): self.options = KingOptions(piece)
-        elif(self.kind == "Queen"): self.options = QueenOptions(piece)
-        elif(self.kind == "Rook"): self.options = RookOptions(piece)
-        elif(self.kind == "Knight"): self.options = KnightOptions(piece)
-        elif(self.kind == "Bishop"): self.options = BishopOptions(piece)
-        elif(self.kind == "Pawn"): self.options = PawnOptions(piece)
+        if(self.kind == "king"): self.options = KingOptions(piece)
+        elif(self.kind == "queen"): self.options = QueenOptions(piece)
+        elif(self.kind == "rook"): self.options = RookOptions(piece)
+        elif(self.kind == "knight"): self.options = KnightOptions(piece)
+        elif(self.kind == "bishop"): self.options = BishopOptions(piece)
+        elif(self.kind == "pawn"): self.options = PawnOptions(piece)
         self.update()
 
     def draw(self, surface):
@@ -116,7 +116,7 @@ class Options():
         return self.options
 
     def stringify(self, option):
-        return option
+        return option.capitalize()
 
     def size(self):
         return len(self.options)
@@ -130,9 +130,9 @@ class Options():
 
 class KingOptions(Options):
 
-    options = ['Queen', 'Rook', 'Bishop', 'Knight', 'Pawn']
+    options = ['queen', 'rook', 'bishop', 'knight', 'pawn']
     selected_option = None
-    kind = "King"
+    kind = "king"
 
     def clicked(self, map):
         return {
@@ -143,45 +143,56 @@ class KingOptions(Options):
 
     def stringify(self, option):
         cost = self.costs[option]
-        return option+" for "+str(cost[0])+" "+cost[1]
+        return option.capitalize()+" for "+str(cost[0])+" "+cost[1]
 
 class QueenOptions(Options):
 
     options = []
-    kind = "Queen"
+    kind = "queen"
 
 class RookOptions(Options):
 
-    options = []
-    kind = "Rook"
+    options = ["build"]
+    kind = "rook"
+
+    def stringify(self, option):
+        cost = self.costs["wall"]
+        return option.capitalize()+" wall for "+str(cost[0])+" "+cost[1]
+
+    def clicked(self, map):
+        return {
+            "func": "create",
+            "choice": "wall",
+            "cost": self.costs["wall"]
+            }
 
 class KnightOptions(Options):
 
     options = []
-    kind = "Knight"
+    kind = "knight"
 
 class BishopOptions(Options):
 
-    options = ['Knight', 'Pawn']
+    options = ['knight', 'pawn']
     selected_option = None
     use_cost = True
-    kind = "Bishop"
+    kind = "bishop"
 
     def clicked(self, map):
         return {
             "func": "create",
             "choice": self.selected_option,
-            "cost": self.costs[self.selected_option]-1
+            "cost": (self.costs[self.selected_option][0]-1, self.costs[self.selected_option][1])
             }
 
     def stringify(self, option):
         cost = self.costs[option]
-        return option+" for "+str(cost[0]-1)+" "+cost[1]
+        return option.capitalize()+" for "+str(cost[0]-1)+" "+cost[1]
 
 class PawnOptions(Options):
 
-    options = ['Collect']
-    kind = "Pawn"
+    options = ['collect']
+    kind = "pawn"
 
     def clicked(self, map):
         x, y = self.piece.getSquare()
@@ -193,11 +204,14 @@ class PawnOptions(Options):
 
 class EndOptions(Options):
 
-    options = ['End Turn']
+    options = ['end']
     kind = "End"
 
     def __init__(self):
         pass
+
+    def stringify(self, option):
+        return option.capitalize()+" Turn"
 
     def clicked(self, string):
         return {"func": "end"}
@@ -205,7 +219,7 @@ class EndOptions(Options):
 class ExMenu(Options):
 
     options = ['hay', 'stone', 'crop', 'gold']
-    kind = "Exchange"
+    kind = "exchange"
 
     def __init__(self):
         pass
@@ -223,7 +237,7 @@ class ExMenu(Options):
 
 class ExButton(Options):
 
-    options = ['Exchange']
+    options = ['exchange']
     kind = "ExButton"
 
     def __init__(self):
@@ -236,10 +250,13 @@ class ExButton(Options):
 class Prompt(Options):
 
     options = ['']
-    kind = "Prompt"
+    kind = "prompt"
 
     def __init__(self, string):
         self.options[0] = string
+
+    def stringify(self, option):
+        return option
 
     def changePrompt(self, string):
         self.options = [string]

@@ -4,12 +4,13 @@ from components.pieces import *
 class LegalType:
 
     image_dict = {
-        "King": "sprites/green_king_20x20.png",
-        "Queen": "sprites/green_queen_20x20.png",
-        "Rook": "sprites/green_rook_20x20.png",
-        "Knight": "sprites/green_knight_20x20.png",
-        "Bishop": "sprites/green_bishop_20x20.png",
-        "Pawn": "sprites/green_pawn_20x20.png",
+        "king": "sprites/green_king_20x20.png",
+        "queen": "sprites/green_queen_20x20.png",
+        "rook": "sprites/green_rook_20x20.png",
+        "knight": "sprites/green_knight_20x20.png",
+        "bishop": "sprites/green_bishop_20x20.png",
+        "pawn": "sprites/green_pawn_20x20.png",
+        "wall": "sprites/green_wall_20x20.png",
         "north": "sprites/green_north_20x20.png",
         "south": "sprites/green_south_20x20.png",
         "east": "sprites/green_east_20x20.png",
@@ -72,13 +73,21 @@ class LegalDrop(LegalType):
         x = int(self.x/STEP_SIZE)
         y = int(self.y/STEP_SIZE)
 
-        if(choice == "Queen"): self.piece = Queen(team, x, y)
-        elif(choice == "Rook"): self.piece = Rook(team, x, y)
-        elif(choice == "Bishop"): self.piece = Bishop(team, x, y)
-        elif(choice == "Knight"): self.piece = Knight(team, x, y)
-        elif(choice == "Pawn"): self.piece = Pawn(team, x, y)
+        if(choice == "queen"): self.piece = Queen(team, x, y)
+        elif(choice == "rook"): self.piece = Rook(team, x, y)
+        elif(choice == "bishop"): self.piece = Bishop(team, x, y)
+        elif(choice == "knight"): self.piece = Knight(team, x, y)
+        elif(choice == "pawn"): self.piece = Pawn(team, x, y)
+        elif(choice == "wall"): self.piece = Wall("neutral", x, y)
 
         self.setImageSurf(choice)
+
+    def checksKing(self, other_team, pieces, map):
+        moves, captures = self.piece.avaliableMoves(pieces, map)
+        for capture in captures:
+            if capture.getKind() == "king" and capture.getTeam() == other_team:
+                return True
+        return False
 
     def getType(self):
         return "drop"
@@ -86,20 +95,22 @@ class LegalDrop(LegalType):
 class LegalCapture:
 
     image_dict = {
-        "King": "sprites/red_king_20x20.png",
-        "Queen": "sprites/red_queen_20x20.png",
-        "Rook": "sprites/red_rook_20x20.png",
-        "Knight": "sprites/red_knight_20x20.png",
-        "Bishop": "sprites/red_bishop_20x20.png",
-        "Pawn": "sprites/red_pawn_20x20.png"
+        "king": "sprites/red_king_20x20.png",
+        "queen": "sprites/red_queen_20x20.png",
+        "rook": "sprites/red_rook_20x20.png",
+        "knight": "sprites/red_knight_20x20.png",
+        "bishop": "sprites/red_bishop_20x20.png",
+        "pawn": "sprites/red_pawn_20x20.png",
+        "wall": "sprites/red_wall_20x20.png"
     }
 
     value_dict = {
-        "Queen": 9,
-        "Rook": 5,
-        "Knight": 3,
-        "Bishop": 3,
-        "Pawn": 1
+        "queen": 9,
+        "rook": 5,
+        "knight": 3,
+        "bishop": 3,
+        "pawn": 1,
+        "wall": 0
     }
 
     def __init__(self, piece):

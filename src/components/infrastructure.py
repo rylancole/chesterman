@@ -50,31 +50,31 @@ class Board:
 class Scoreboard(Board):
 
     dict_list = [
-        "Chk", "Col", "Cap", "Tot"
+        "chk", "col", "cap", "tot"
     ]
     dict = {}
 
     def increaseCheckPoints(self, team, chk):
-        self.dict[team]["Chk"] += chk
+        self.dict[team]["chk"] += chk
         self.updateTotal(team)
 
     def increaseCapturePoints(self, team, cap):
-        self.dict[team]["Cap"] += cap
+        self.dict[team]["cap"] += cap
         self.updateTotal(team)
 
     def increaseCollectionPoints(self, team, col):
-        self.dict[team]["Col"] += col
+        self.dict[team]["col"] += col
         self.updateTotal(team)
 
     def updateTotal(self, team):
-        self.dict[team]["Tot"] = self.dict[team]["Chk"] + self.dict[team]["Col"] + self.dict[team]["Cap"]
+        self.dict[team]["tot"] = self.dict[team]["chk"] + self.dict[team]["col"] + self.dict[team]["cap"]
 
     def getWinner(self):
         for team in self.dict:
-            if(self.dict[team]["Chk"]>=250
-                or self.dict[team]["Cap"]>=250
-                    or self.dict[team]["Col"]>=250
-                        or self.dict[team]["Tot"]>=600):
+            if(self.dict[team]["chk"]>=250
+                or self.dict[team]["cap"]>=250
+                    or self.dict[team]["col"]>=250
+                        or self.dict[team]["tot"]>=600):
                 return team
         return None
 
@@ -88,6 +88,10 @@ class ResourceBoard(Board):
 class Map:
 
     matrix = []
+    castle_code = {
+        "white": 'a',
+        "black": 'b'
+    }
 
     def __init__(self):
         pass
@@ -125,13 +129,14 @@ class Map:
 
         return dict[self.matrix[y][x]]
 
-    def putCastle(self, x, y):
+    def putCastle(self, team, x, y):
         '''
         Initialiaze 4x4 castle at point in units [Squares]
         '''
+
         for i in range(x, x+4):
             for j in range(y, y+4):
-                self.matrix[j][i] = "t"
+                self.matrix[j][i] = self.castle_code[team]
 
     def isCastleAt(self, x, y):
         '''
@@ -142,7 +147,18 @@ class Map:
         if(self.isWaterAt(x*STEP_SIZE, y*STEP_SIZE)):
             return False
         else:
-            return self.matrix[y][x] == "t"
+            return self.matrix[y][x] == "a" or self.matrix[y][x] == "b"
+
+    def isColorCastleAt(self, team, x, y):
+        '''
+        Return true if square on castle grounds
+        Takes in coords in units [Squares]
+        '''
+
+        if(self.isWaterAt(x*STEP_SIZE, y*STEP_SIZE)):
+            return False
+        else:
+            return self.matrix[y][x] == self.castle_code[team]
 
     def isEmptyAt(self, x, y):
         '''

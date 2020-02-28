@@ -36,9 +36,20 @@ class GamePiece:
             self._image_surf = pygame.image.load(self._white_image_path).convert()
         elif(team == "black"):
             self._image_surf = pygame.image.load(self._black_image_path).convert()
+        elif(team == "neutral"):
+            self._image_surf = pygame.image.load(self._neutral_image_path).convert()
 
     def draw(self, surface):
         surface.blit(self._image_surf,(self.x,self.y))
+
+    def changeTeam(self, new_team):
+        self.team = new_team
+        if(new_team == "white"):
+            self._image_surf = pygame.image.load(self._white_image_path).convert()
+        elif(new_team == "black"):
+            self._image_surf = pygame.image.load(self._black_image_path).convert()
+        elif(new_team == "neutral"):
+            self._image_surf = pygame.image.load(self._neutral_image_path).convert()
 
     def movesInDirection(self, direction, map, pieces, limit=None, allowCapture=True):
         moves = []
@@ -61,6 +72,7 @@ class GamePiece:
         return moves
 
     def avaliableDropPoints(self, pieces, map):
+        if(self.onMyCastle(map)): return self.castleDrop(pieces, map)
         moves = []
         self.captures = []
         moves.extend(self.movesInDirection("east", map, pieces, 1, False))
@@ -71,6 +83,23 @@ class GamePiece:
         moves.extend(self.movesInDirection("northwest", map, pieces, 1, False))
         moves.extend(self.movesInDirection("southeast", map, pieces, 1, False))
         moves.extend(self.movesInDirection("southwest", map, pieces, 1, False))
+        return moves
+
+    def castleDrop(self, pieces, map):
+        moves = []
+
+        x, y = self.getSquare()
+
+        for i in range(x-3, x+3):
+            for j in range(y-3, y+3):
+                if(map.isColorCastleAt(self.team, i, j)):
+                    skip = False
+                    for piece in pieces:
+                        if piece.getSquare() == (i, j):
+                            skip = True
+                    if(not skip):
+                        moves.append((i*STEP_SIZE, j*STEP_SIZE))
+
         return moves
 
     def avaliableMoves(self, pieces, map):
@@ -95,7 +124,7 @@ class GamePiece:
         for piece in pieces:
             possible_moves, possible_captures = piece.avaliableMoves(pieces, map)
             for capture in possible_captures:
-                if capture.getKind() == "King" and capture.getTeam() == self.team:
+                if capture.getKind() == "king" and capture.getTeam() == self.team:
                     return True
 
         return False
@@ -112,6 +141,15 @@ class GamePiece:
     def getTeam(self):
         return self.team
 
+    def getBlock(self, map):
+        return map.get(int(self.x/STEP_SIZE), int(self.y/STEP_SIZE))
+
+    def onMyCastle(self, map):
+        return map.isColorCastleAt(self.team, int(self.x/STEP_SIZE), int(self.y/STEP_SIZE))
+
+    def onColorCastle(self, map, team):
+        return map.isColorCastleAt(team, int(self.x/STEP_SIZE), int(self.y/STEP_SIZE))
+
     def getCorner(self):
         # only Kings should return a valid corner
         return None
@@ -127,7 +165,7 @@ class GamePiece:
 
 class King(GamePiece):
 
-    piece_name = "King"
+    piece_name = "king"
     _white_image_path = "sprites/white_king_20x20.png"
     _black_image_path = "sprites/black_king_20x20.png"
     captures = []
@@ -151,14 +189,16 @@ class King(GamePiece):
     def avaliableMoves(self, pieces, map):
         moves = []
         self.captures = []
-        moves.extend(self.movesInDirection("east", map, pieces, 1))
-        moves.extend(self.movesInDirection("west", map, pieces, 1))
-        moves.extend(self.movesInDirection("north", map, pieces, 1))
-        moves.extend(self.movesInDirection("south", map, pieces, 1))
-        moves.extend(self.movesInDirection("northeast", map, pieces, 1))
-        moves.extend(self.movesInDirection("northwest", map, pieces, 1))
-        moves.extend(self.movesInDirection("southeast", map, pieces, 1))
-        moves.extend(self.movesInDirection("southwest", map, pieces, 1))
+        if(self.getBlock(map) == 't'): lim = 2
+        else: lim = 1
+        moves.extend(self.movesInDirection("east", map, pieces, lim))
+        moves.extend(self.movesInDirection("west", map, pieces, lim))
+        moves.extend(self.movesInDirection("north", map, pieces, lim))
+        moves.extend(self.movesInDirection("south", map, pieces, lim))
+        moves.extend(self.movesInDirection("northeast", map, pieces, lim))
+        moves.extend(self.movesInDirection("northwest", map, pieces, lim))
+        moves.extend(self.movesInDirection("southeast", map, pieces, lim))
+        moves.extend(self.movesInDirection("southwest", map, pieces, lim))
         return moves, self.captures
 
     def isInCheckMate(self, pieces, map):
@@ -186,7 +226,7 @@ class King(GamePiece):
 
 class Queen(GamePiece):
 
-    piece_name = "Queen"
+    piece_name = "queen"
     _white_image_path = "sprites/white_queen_20x20.png"
     _black_image_path = "sprites/black_queen_20x20.png"
     captures = []
@@ -206,7 +246,7 @@ class Queen(GamePiece):
 
 class Rook(GamePiece):
 
-    piece_name = "Rook"
+    piece_name = "rook"
     _white_image_path = "sprites/white_rook_20x20.png"
     _black_image_path = "sprites/black_rook_20x20.png"
     captures = []
@@ -222,7 +262,7 @@ class Rook(GamePiece):
 
 class Knight(GamePiece):
 
-    piece_name = "Knight"
+    piece_name = "knight"
     _white_image_path = "sprites/white_knight_20x20.png"
     _black_image_path = "sprites/black_knight_20x20.png"
     captures = []
@@ -274,7 +314,7 @@ class Knight(GamePiece):
 
 class Bishop(GamePiece):
 
-    piece_name = "Bishop"
+    piece_name = "bishop"
     _white_image_path = "sprites/white_bishop_20x20.png"
     _black_image_path = "sprites/black_bishop_20x20.png"
     captures = []
@@ -290,7 +330,7 @@ class Bishop(GamePiece):
 
 class Pawn(GamePiece):
 
-    piece_name = "Pawn"
+    piece_name = "pawn"
     _white_image_path = "sprites/white_pawn_20x20.png"
     _black_image_path = "sprites/black_pawn_20x20.png"
     captures = []
@@ -307,3 +347,10 @@ class Pawn(GamePiece):
         moves.extend(self.movesInDirection("southeast", map, pieces, 2))
         moves.extend(self.movesInDirection("southwest", map, pieces, 2))
         return moves, self.captures
+
+class Wall(GamePiece):
+    piece_name = "wall"
+    _neutral_image_path = "sprites/neutral_wall_20x20.png"
+
+    def avaliableMoves(self, pieces=None, map=None):
+        return [], []

@@ -244,5 +244,6 @@ if __name__ == "__main__" :
     h = 8
     map = ChunkMap(w, h, 20)
     map.makeIsland(int(w*CHUNK_SIZE/2), int(h*CHUNK_SIZE/2), 75)
+    map.print()
     map.saveAsPNG("../maps/map1.png")
     map.saveAsTxt("../maps/map1.txt")
