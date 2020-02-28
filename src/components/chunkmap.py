@@ -3,8 +3,6 @@ from random import choice
 from termcolor import colored, cprint
 from PIL import Image
 
-import settings
-
 DARK = True
 resource_list = [
     "stone", "stone",
@@ -21,7 +19,7 @@ resource_list = [
     "empty", "empty", "empty"
     ]
 
-CHUNK_SIZE = settings.CHUNK_SIZE
+CHUNK_SIZE = 4
 
 class Square:
 
@@ -246,6 +244,5 @@ if __name__ == "__main__" :
     h = 8
     map = ChunkMap(w, h, 20)
     map.makeIsland(int(w*CHUNK_SIZE/2), int(h*CHUNK_SIZE/2), 75)
-    map.print()
     map.saveAsPNG("../maps/map1.png")
     map.saveAsTxt("../maps/map1.txt")
