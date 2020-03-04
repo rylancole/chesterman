@@ -53,7 +53,7 @@ class Menu:
     def grabClick(self, x, y):
         if(self.popupRect.collidepoint(x, y)):
             if(self.options.size() > 1):
-                self.optionClick(x-1040, y-(400-STEP_SIZE*CHUNK_SIZE))
+                self.optionClick(x-self.x, y-(self.y-STEP_SIZE*CHUNK_SIZE))
             return self.options
         return False
 
@@ -62,14 +62,19 @@ class Menu:
         self.options = EndOptions()
         self.update()
 
-    def createExButton(self):
+    def createExButton(self, can_coll):
         self.create()
-        self.options = ExButton()
+        self.options = ExButton(can_coll)
         self.update()
 
     def createExMenu(self):
         self.create()
         self.options = ExMenu()
+        self.update()
+
+    def createCollectMenu(self, amount_of):
+        self.create()
+        self.options = CollectMenu(amount_of)
         self.update()
 
     def createPrompt(self, string):
@@ -135,6 +140,8 @@ class KingOptions(Options):
     kind = "king"
 
     def clicked(self, map):
+        if(self.selected_option == None):
+            return None
         return {
             "func": "create",
             "choice": self.selected_option,
@@ -152,18 +159,21 @@ class QueenOptions(Options):
 
 class RookOptions(Options):
 
-    options = ["build"]
+    options = ["wall", "port"]
+    selected_option = None
     kind = "rook"
 
     def stringify(self, option):
-        cost = self.costs["wall"]
-        return option.capitalize()+" wall for "+str(cost[0])+" "+cost[1]
+        cost = self.costs[option]
+        return "Build "+option+" for "+str(cost[0])+" "+cost[1]
 
     def clicked(self, map):
+        if(self.selected_option == None):
+            return None
         return {
             "func": "create",
-            "choice": "wall",
-            "cost": self.costs["wall"]
+            "choice": self.selected_option,
+            "cost": self.costs[self.selected_option]
             }
 
 class KnightOptions(Options):
@@ -179,6 +189,8 @@ class BishopOptions(Options):
     kind = "bishop"
 
     def clicked(self, map):
+        if(self.selected_option == None):
+            return None
         return {
             "func": "create",
             "choice": self.selected_option,
@@ -191,16 +203,8 @@ class BishopOptions(Options):
 
 class PawnOptions(Options):
 
-    options = ['collect']
+    options = []
     kind = "pawn"
-
-    def clicked(self, map):
-        x, y = self.piece.getSquare()
-        # returning the wrong thing here
-        if(map.isWaterAt(x, y, True) or map.isCastleAt(x, y) or map.isEmptyAt(x, y)):
-            return {"func": None}
-        block = map.get(x, y, True)
-        return {"func": "collect", "resrc": block}
 
 class EndOptions(Options):
 
@@ -218,7 +222,8 @@ class EndOptions(Options):
 
 class ExMenu(Options):
 
-    options = ['hay', 'stone', 'crop', 'gold']
+    options = ['hay', 'stone', 'lumber', 'crop', 'gold']
+    selected_option = None
     kind = "exchange"
 
     def __init__(self):
@@ -230,21 +235,50 @@ class ExMenu(Options):
         return '5 '+option+' -> 1 gold'
 
     def clicked(self, string):
+        if(self.selected_option == None):
+            return None
         return {
             "func": "exchange",
             "choice": self.selected_option
         }
 
-class ExButton(Options):
+class CollectMenu(Options):
 
-    options = ['exchange']
-    kind = "ExButton"
+    selected_option = None
+    kind = "collect"
 
-    def __init__(self):
-        pass
+    def __init__(self, amount_of):
+        self.amount_of = amount_of
+        self.options = []
+        for key in amount_of:
+            if(amount_of[key] > 0):
+                self.options.append(key)
+
+    def stringify(self, option):
+        return 'Collect '+str(self.amount_of[option])+" "+option
 
     def clicked(self, string):
-        return {"func": "exchange"}
+        if(self.selected_option): ret_option = self.selected_option
+        elif(len(self.options) > 0): ret_option = self.options[0]
+        else: return None
+        return {
+            "func": "collect",
+            "resrc": ret_option,
+            "amount": self.amount_of[ret_option]
+        }
+
+class ExButton(Options):
+
+    options = ['exchange', 'collect']
+    selected_option = None
+    kind = "ExButton"
+
+    def __init__(self, can_coll):
+        if(can_coll): self.options = ['exchange', 'collect']
+        else: self.options = ['exchange', 'no collect']
+
+    def clicked(self, string):
+        return {"func": self.selected_option}
 
 
 class Prompt(Options):

@@ -9,11 +9,11 @@ def init():
     ISLAND_SIZE = 75
 
     global MAP_PATH
-    # MAP_PATH = "maps/map1"
-    MAP_PATH = "maps/map2"
-    # MAP_PATH = "maps/map3"
-    # MAP_PATH = "maps/map4"
-    # MAP_PATH = "maps/map5"
+    # MAP_PATH = "maps/australia"
+    # MAP_PATH = "maps/great-b"
+    # MAP_PATH = "maps/vancouver"
+    MAP_PATH = "maps/iceland"
+
 
     global WIDTH
     WIDTH = 13
@@ -28,7 +28,8 @@ def init():
         "knight": (3, "hay"),
         "bishop": (1, "gold"),
         "pawn": (3, "crop"),
-        "wall": (1, "stone")
+        "wall": (1, "stone"),
+        "port": (10, "lumber")
     }
 
     global GOLD_WORTH

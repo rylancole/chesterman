@@ -26,6 +26,7 @@ class App:
     '''
 
     pieces = []
+    boats = []
     castles = {}
     moves = []
     captures = []
@@ -42,6 +43,7 @@ class App:
     second_move = False
     moved_already = False
     turn_number = 0
+    force_boat_focus = False
 
     def __init__(self, w, h):
         self._running = True
@@ -56,7 +58,7 @@ class App:
         self.scoreboard = Scoreboard(1)
         self.resrcboard = ResourceBoard(6)
         self.menu = Menu(1040, 400)
-        self.ex_butt = Menu(1040, 675)
+        self.ex_butt = Menu(1040, 650)
         self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
         pygame.display.set_caption('Chesterman Demo')
         self._running = True
@@ -73,8 +75,8 @@ class App:
             for j in range(y, y+4):
                 if(self.map.isWaterAt(i*STEP_SIZE, j*STEP_SIZE) or self.map.isCastleAt(i, j)):
                     return False
-        for i in range(x-3, x+7):
-            for j in range(y-3, y+7):
+        for i in range(x-4, x+8):
+            for j in range(y-4, y+8):
                 if(self.map.isCastleAt(i, j)):
                     return False
         return True
@@ -88,21 +90,80 @@ class App:
         self.moves.append(LegalEstablishment(x+2, y+3, "south"))
         self.moves.append(LegalEstablishment(x+3, y+2, "east"))
 
-    def getPiece(self, team, kind):
+    def collectAmounts(self, team):
+        amount_of = {
+            "hay": 0,
+            "crop": 0,
+            "lumber": 0,
+            "stone": 0
+        }
+
+        pawns = self.getPieces(team, "pawn")
+        if(len(pawns) == 0):
+            king = self.getKing(team)
+            block = king.getBlock(self.map, True)
+            if(block not in ["water", "castle", "empty"]):
+                amount_of[block] += 2
+            return amount_of
+
+        for pawn in pawns:
+            block = pawn.getBlock(self.map, True)
+            if(block not in ["water", "castle", "empty"]):
+                amount_of[block] += 1
+
+        return amount_of
+
+    def embark(self, port, sailor):
+        self.pieces.remove(sailor)
+        x, y = port.getSquare()
+        boat = Boat(x, y, sailor)
+        self.pieces.append(boat)
+        return boat
+
+    def disembark(self, boat):
+        self.pieces.remove(boat)
+        self.pieces.append(boat.getSailor())
+
+    def activatePorts(self, piece):
+        ports = self.getPieces(piece.getTeam(), "port")
+        x, y = piece.getSquare()
+        for i in [-1, 0, 1]:
+            for j in [-1, 0, 1]:
+                for port in ports:
+                    if port.getSquare() == (x+i, y+j):
+                        port.activate()
+
+    def deactivatePorts(self):
+        for piece in self.pieces:
+            if piece.getKind() == "port":
+                piece.deactivate()
+
+    def getPieces(self, team, kind):
+        found = []
         for piece in self.pieces:
             if piece.getKind() == kind and piece.getTeam() == team:
+                found.append(piece)
+        return found
+
+    def getKing(self, team):
+        for piece in self.pieces:
+            if piece.getKind() == "king" and piece.getTeam() == team:
                 return piece
         return None
 
     def loadPieces(self, team):
-        king = self.getPiece(team, "king")
+        king = self.getKing(team)
         loader = PieceLoader()
         loader.loadPieces(king, self.pieces)
 
     def stealGold(self, team):
-        if(self.resrcboard.get(self.notColor(team), "gold") > 0):
-            self.resrcboard.increaseResource(self.notColor(team), "gold", -1)
-            self.resrcboard.increaseResource(team, "gold", 1)
+        priority_list = ["gold", "stone", "lumber", "crop", "hay"]
+
+        for resrc in priority_list:
+            if(self.resrcboard.get(self.notColor(team), resrc) > 0):
+                self.resrcboard.increaseResource(self.notColor(team), resrc, -1)
+                self.resrcboard.increaseResource(team, resrc, 1)
+                break
 
     def on_setup(self):
         self.color_turn = "black"
@@ -209,15 +270,15 @@ class App:
 
     def creation(self, choice):
         self.moves = []
-        possible_drops = self.selected_piece.avaliableDropPoints(self.pieces, self.map)
+        if(choice != "port"): possible_drops = self.selected_piece.avaliableDropPoints(self.pieces, self.map)
+        else: possible_drops = self.selected_piece.avaliablePortPoints(self.pieces, self.map)
         for drop in possible_drops:
             legal_drop = LegalDrop(drop, self.color_turn, choice)
             if(not legal_drop.checksKing(self.notColor(self.color_turn), self.pieces, self.map)):
                 self.moves.append(legal_drop)
 
     def annouceWinner(self, winner):
-        self.menu.createPrompt(winner+" wins!")
-        time.sleep(5)
+        print(winner+" wins!")
 
     def notColor(self, team):
         if(team == "white"):
@@ -225,16 +286,21 @@ class App:
         if(team == "black"):
             return "white"
 
+    def kingInCheck(self, team):
+        king = self.getKing(team)
+        return king.isInCheck(self.pieces, self.map)
+
     def turnSwitch(self):
         self.turn_number += 1
         self.prev_piece = self.selected_piece
         if(self.selected_piece and self.selected_piece.getKind() == "knight" and self.selected_piece.onColorCastle(self.map, self.notColor(self.color_turn))):
             self.stealGold(self.color_turn)
+        self.selected_piece = None
         if(self.can_coll[self.color_turn] == None):
             self.can_coll[self.color_turn] = False
         elif(self.can_coll[self.color_turn] == False):
             self.can_coll[self.color_turn] = True
-        opp_king = self.getPiece(self.notColor(self.color_turn), "king")
+        opp_king = self.getKing(self.notColor(self.color_turn))
         if(opp_king.isInCheck(self.pieces, self.map)):
             if(opp_king.isInCheckMate(self.pieces, self.map)):
                 self.scoreboard.increaseCheckPoints(self.color_turn, 250)
@@ -253,11 +319,16 @@ class App:
         self.second_move = False
         self.moved_already = False
 
+        self.deactivatePorts()
+
         self.winner = self.scoreboard.getWinner()
         if(self.winner):
-            print(self.winner+" wins!")
+            self.annouceWinner(self.winner)
             self._running = False
             return
+
+        self.ex_butt.createExButton(self.can_coll[self.color_turn])
+        self.force_boat_focus = False
 
     def convert(self, bishop, pawn):
         b_coord = bishop.getSQpixels()
@@ -289,7 +360,7 @@ class App:
         if self.on_init() == False:
             self._running = False
 
-        self.ex_butt.createExButton()
+        self.ex_butt.createExButton(True)
         #run game
         while( self._running ):
             ev = pygame.event.get()
@@ -305,20 +376,24 @@ class App:
                     done_round = False
 
 #HANDLE EXCHANGE BUTTON
-                    selected_option = self.ex_butt.grabClick(pos[0], pos[1])
-                    if(selected_option):
-                        opt_obj = selected_option.clicked(self.map)
-                        if(opt_obj["func"] == "exchange"):
-                            done_round = True
-                            self.menu.createExMenu()
+                    if(not self.force_boat_focus):
+                        selected_option = self.ex_butt.grabClick(pos[0], pos[1])
+                        if(selected_option):
+                            opt_obj = selected_option.clicked(self.map)
+                            if(opt_obj["func"] == "exchange"):
+                                done_round = True
+                                self.menu.createExMenu()
+                            elif(opt_obj["func"] == "collect"):
+                                done_round = True
+                                self.menu.createCollectMenu(self.collectAmounts(self.color_turn))
 
 #HANDLE MENUS
-                    if(self.menu.exists()):
+                    if(self.menu.exists() and not self.force_boat_focus):
                         selected_option = self.menu.grabClick(pos[0], pos[1])
                         if(selected_option):
                             done_round = True
                             opt_obj = selected_option.clicked(self.map)
-                            if(opt_obj["func"] == None):
+                            if(opt_obj == None or opt_obj["func"] == None):
                                 done_round = False
                             elif(opt_obj["func"] == "create"):
                                 cost, cost_resrc = opt_obj["cost"]
@@ -342,7 +417,7 @@ class App:
                                 self.menu.vanish()
                                 self.turnSwitch()
                             elif(opt_obj["func"] == "collect"):
-                                self.resrcboard.increaseResource(self.color_turn, opt_obj["resrc"], 1)
+                                self.resrcboard.increaseResource(self.color_turn, opt_obj["resrc"], opt_obj["amount"])
                                 self.can_coll[self.color_turn] = None
                                 self.moves = []
                                 self.captures = []
@@ -367,7 +442,7 @@ class App:
                                     self.kill(capture)
                                     converted = False
                                 self.selected_piece.moveTo(capture.getSQpixels())
-                                if(self.getPiece(self.color_turn, "king").isInCheck(self.pieces, self.map)):
+                                if(self.getKing(self.color_turn).isInCheck(self.pieces, self.map)):
                                     self.selected_piece.undoMove()
                                     if(converted): self.unconvert(capture.getPieceObj())
                                     else: self.unkill(capture)
@@ -393,25 +468,28 @@ class App:
                                     self.selected_piece.moveTo(move.getSQpixels())
                                 elif(move.getType() == "drop"
                                     and not self.selected_piece.isInCheck(self.pieces, self.map)
-                                    and not self.getPiece(self.color_turn, "king").isInCheck(self.pieces, self.map)):
+                                    and not self.getKing(self.color_turn).isInCheck(self.pieces, self.map)):
                                     # drop new piece to this position if clicked
                                     # and selected piece nor King are currently in check
                                     self.pieces.append(move.getPiece())
                                     self.resrcboard.increaseResource(self.color_turn, cost_resrc, -cost)
                                     dropped_piece = True
 
-                                if(self.getPiece(self.color_turn, "king").isInCheck(self.pieces, self.map)):
+                                if(self.getKing(self.color_turn).isInCheck(self.pieces, self.map)):
                                     self.selected_piece.undoMove()
                                     if(dropped_piece): self.pieces.remove(move.getPiece())
                                     self.menu.createPrompt("Invalid move. You are in check.")
                                 else:
+                                    x, y = self.selected_piece.getSQpixels()
+                                    if(self.selected_piece.getKind() == "boat" and not self.map.isWaterAt(x, y)):
+                                        self.disembark(self.selected_piece)
                                     if(self.selected_piece.getKind() != "pawn"):
                                         self.second_move = True
                                     else:
                                         if(self.moved_already):
                                             self.second_move = True
                                         else:
-                                            opp_king = self.getPiece(self.notColor(self.color_turn), "king")
+                                            opp_king = self.getKing(self.notColor(self.color_turn))
                                             if(opp_king.isInCheck(self.pieces, self.map)):
                                                 self.second_move = True
                                             else:
@@ -428,6 +506,9 @@ class App:
                                 self.prev_piece = self.selected_piece
 
 
+                    if(self.force_boat_focus):
+                        done_round = True
+
 #HANDLE PIECE SELECTION
                     #check to see if a piece was clicked
                     if(not done_round):
@@ -436,19 +517,35 @@ class App:
                                 pass
                             elif piece.getSQpixels() == (x, y):
                                 if(piece.getTeam() == self.color_turn):
-                                    #choose piece as selected if clicked
-                                    self.selected_piece = piece
-                                    if(piece.getKind() != "pawn" or (self.can_coll[self.color_turn] and not self.moved_already)):
-                                        self.menu.createKind(piece)
-                                    self.moves = []
-                                    self.captures = []
-                                    #display legal moves and captures of selected piece
-                                    possible_moves, possible_captures = piece.avaliableMoves(self.pieces, self.map)
-                                    for move in possible_moves:
-                                        self.moves.append(LegalMove(move))
-                                    if(not self.moved_already and self.turn_number > 1):
-                                        for capture in possible_captures:
-                                            self.captures.append(LegalCapture(capture))
+                                    if(piece.getKind() == "port"):
+                                        if(piece.isActive()):
+                                            boat = self.embark(piece, self.selected_piece)
+                                            self.selected_piece = boat
+                                            self.moves = []
+                                            self.captures = []
+                                            possible_moves, possible_captures = boat.avaliableMoves(self.pieces, self.map)
+                                            for move in possible_moves:
+                                                self.moves.append(LegalMove(move))
+                                            for capture in possible_captures:
+                                                self.captures.append(LegalCapture(capture))
+                                            self.menu.vanish()
+                                            self.force_boat_focus = True
+                                    else:
+                                        #choose piece as selected if clicked
+                                        self.selected_piece = piece
+                                        if(not self.kingInCheck(piece.getTeam())):
+                                            self.menu.createKind(piece)
+                                        self.moves = []
+                                        self.captures = []
+                                        #display legal moves and captures of selected piece
+                                        possible_moves, possible_captures = piece.avaliableMoves(self.pieces, self.map)
+                                        for move in possible_moves:
+                                            self.moves.append(LegalMove(move))
+                                        if(not self.moved_already and self.turn_number > 1):
+                                            for capture in possible_captures:
+                                                self.captures.append(LegalCapture(capture))
+                                        if(self.selected_piece.getKind() not in ["king", "boat"]):
+                                            self.activatePorts(self.selected_piece)
                                 done_round = True
                                 break
 
@@ -463,6 +560,7 @@ class App:
                                     self.menu.vanish()
                             else:
                                 self.menu.createEndMenu()
+                            self.deactivatePorts()
 
                 #handle exit button being clicked
                 if event.type == pygame.QUIT:

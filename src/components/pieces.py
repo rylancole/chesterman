@@ -17,27 +17,26 @@ direction_dict = {
 
 class GamePiece:
 
-    piece_name = None   #used for toString
-    _white_image_path = None    #used to initialize image
+    piece_name = None   # used for toString and getKind
+    _white_image_path = None    # used to initialize image
     _black_image_path = None
     captures = []
     prev_x = None
     prev_y = None
 
-
     def __init__(self, team, x, y):
-        #store move coordinates in unit [SQpixels]
+        # store move coordinates in unit [SQpixels]
         self.x = x*STEP_SIZE
         self.y = y*STEP_SIZE
 
         self.multiplier = 1
         self.team = team
         if(team == "white"):
-            self._image_surf = pygame.image.load(self._white_image_path).convert()
+            self._image_surf = pygame.image.load("sprites/"+self.getKind()+"/white_"+self.getKind()+"20x20.png").convert_alpha()
         elif(team == "black"):
-            self._image_surf = pygame.image.load(self._black_image_path).convert()
+            self._image_surf = pygame.image.load("sprites/"+self.getKind()+"/black_"+self.getKind()+"20x20.png").convert_alpha()
         elif(team == "neutral"):
-            self._image_surf = pygame.image.load(self._neutral_image_path).convert()
+            self._image_surf = pygame.image.load(self._neutral_image_path).convert_alpha()
 
     def draw(self, surface):
         surface.blit(self._image_surf,(self.x,self.y))
@@ -45,11 +44,11 @@ class GamePiece:
     def changeTeam(self, new_team):
         self.team = new_team
         if(new_team == "white"):
-            self._image_surf = pygame.image.load(self._white_image_path).convert()
+            self._image_surf = pygame.image.load("sprites/"+self.getKind()+"/white_"+self.getKind()+"20x20.png").convert_alpha()
         elif(new_team == "black"):
-            self._image_surf = pygame.image.load(self._black_image_path).convert()
+            self._image_surf = pygame.image.load("sprites/"+self.getKind()+"/black_"+self.getKind()+"20x20.png").convert_alpha()
         elif(new_team == "neutral"):
-            self._image_surf = pygame.image.load(self._neutral_image_path).convert()
+            self._image_surf = pygame.image.load(self._neutral_image_path).convert_alpha()
 
     def movesInDirection(self, direction, map, pieces, limit=None, allowCapture=True):
         moves = []
@@ -68,7 +67,32 @@ class GamePiece:
             i += inc_i
             j += inc_j
             count += 1
+        return moves
 
+    def movesInWater(self, direction, map, pieces, limit=None, allowCapture=True):
+        moves = []
+        inc_i, inc_j = direction_dict[direction]
+        i = inc_i
+        j = inc_j
+        count = 0
+        break_out = False
+        while((limit == None or count < limit) and map.isWaterAt(self.x+i, self.y+j) and map.has(self.x+i, self.y+j)):
+            for piece in pieces:
+                if piece.getSQpixels() == (self.x+i, self.y+j):
+                    if(allowCapture and piece.team != self.team and piece.getKind() != "port"): self.captures.append(piece)
+                    break_out = True
+            if(break_out): break
+            moves.append((self.x+i, self.y+j))
+            i += inc_i
+            j += inc_j
+            count += 1
+        if((limit == None or count < limit) and not map.isWaterAt(self.x+i, self.y+j) and map.has(self.x+i, self.y+j)):
+            skip = False
+            for piece in pieces:
+                if piece.getSQpixels() == (self.x+i, self.y+j):
+                    skip = True
+            if(not skip):
+                moves.append((self.x+i, self.y+j))
         return moves
 
     def avaliableDropPoints(self, pieces, map):
@@ -83,6 +107,16 @@ class GamePiece:
         moves.extend(self.movesInDirection("northwest", map, pieces, 1, False))
         moves.extend(self.movesInDirection("southeast", map, pieces, 1, False))
         moves.extend(self.movesInDirection("southwest", map, pieces, 1, False))
+        return moves
+
+    def avaliablePortPoints(self, pieces, map):
+        moves = []
+
+        for direction in direction_dict:
+            i, j = direction_dict[direction]
+            if(map.isWaterAt(self.x+i, self.y+j)):
+                moves.append((self.x+i, self.y+j))
+
         return moves
 
     def castleDrop(self, pieces, map):
@@ -141,8 +175,8 @@ class GamePiece:
     def getTeam(self):
         return self.team
 
-    def getBlock(self, map):
-        return map.get(int(self.x/STEP_SIZE), int(self.y/STEP_SIZE))
+    def getBlock(self, map, needFullWord=False):
+        return map.get(int(self.x/STEP_SIZE), int(self.y/STEP_SIZE), needFullWord)
 
     def onMyCastle(self, map):
         return map.isColorCastleAt(self.team, int(self.x/STEP_SIZE), int(self.y/STEP_SIZE))
@@ -157,6 +191,9 @@ class GamePiece:
     def getMultiplier(self):
         return self.multiplier
 
+    def setMultiplier(self, m):
+        self.multiplier = m
+
     def incMultiplier(self):
         self.multiplier += 1
 
@@ -166,8 +203,6 @@ class GamePiece:
 class King(GamePiece):
 
     piece_name = "king"
-    _white_image_path = "sprites/white_king_20x20.png"
-    _black_image_path = "sprites/black_king_20x20.png"
     captures = []
 
     def __init__(self, team, x, y, corner=""):
@@ -179,9 +214,9 @@ class King(GamePiece):
         self.team = team
         self.corner = corner
         if(team == "white"):
-            self._image_surf = pygame.image.load(self._white_image_path).convert()
+            self._image_surf = pygame.image.load("sprites/"+self.getKind()+"/white_"+self.getKind()+"20x20.png").convert_alpha()
         elif(team == "black"):
-            self._image_surf = pygame.image.load(self._black_image_path).convert()
+            self._image_surf = pygame.image.load("sprites/"+self.getKind()+"/black_"+self.getKind()+"20x20.png").convert_alpha()
 
     def getCorner(self):
         return self.corner
@@ -189,7 +224,7 @@ class King(GamePiece):
     def avaliableMoves(self, pieces, map):
         moves = []
         self.captures = []
-        if(self.getBlock(map) == 't'): lim = 2
+        if(self.onMyCastle(map)): lim = 2
         else: lim = 1
         moves.extend(self.movesInDirection("east", map, pieces, lim))
         moves.extend(self.movesInDirection("west", map, pieces, lim))
@@ -227,8 +262,6 @@ class King(GamePiece):
 class Queen(GamePiece):
 
     piece_name = "queen"
-    _white_image_path = "sprites/white_queen_20x20.png"
-    _black_image_path = "sprites/black_queen_20x20.png"
     captures = []
 
     def avaliableMoves(self, pieces, map):
@@ -247,8 +280,6 @@ class Queen(GamePiece):
 class Rook(GamePiece):
 
     piece_name = "rook"
-    _white_image_path = "sprites/white_rook_20x20.png"
-    _black_image_path = "sprites/black_rook_20x20.png"
     captures = []
 
     def avaliableMoves(self, pieces, map):
@@ -263,8 +294,6 @@ class Rook(GamePiece):
 class Knight(GamePiece):
 
     piece_name = "knight"
-    _white_image_path = "sprites/white_knight_20x20.png"
-    _black_image_path = "sprites/black_knight_20x20.png"
     captures = []
 
     direction_dict = {
@@ -315,8 +344,6 @@ class Knight(GamePiece):
 class Bishop(GamePiece):
 
     piece_name = "bishop"
-    _white_image_path = "sprites/white_bishop_20x20.png"
-    _black_image_path = "sprites/black_bishop_20x20.png"
     captures = []
 
     def avaliableMoves(self, pieces, map):
@@ -331,8 +358,6 @@ class Bishop(GamePiece):
 class Pawn(GamePiece):
 
     piece_name = "pawn"
-    _white_image_path = "sprites/white_pawn_20x20.png"
-    _black_image_path = "sprites/black_pawn_20x20.png"
     captures = []
 
     def avaliableMoves(self, pieces, map):
@@ -350,7 +375,71 @@ class Pawn(GamePiece):
 
 class Wall(GamePiece):
     piece_name = "wall"
-    _neutral_image_path = "sprites/neutral_wall_20x20.png"
+    _neutral_image_path = "sprites/wall/neutral_wall_20x20.png"
 
     def avaliableMoves(self, pieces=None, map=None):
         return [], []
+
+class Port(GamePiece):
+    piece_name = "port"
+    _white_image_path = "sprites/port/white_port_20x20.png"
+    _black_image_path = "sprites/port/black_port_20x20.png"
+    _active_image_path = "sprites/port/boat20x20.png"
+    active = False
+    boat = None
+
+    def activate(self):
+        self.active = True
+        self._image_surf = pygame.image.load(self._active_image_path).convert_alpha()
+
+    def deactivate(self):
+        self.active = False
+        if(self.team == "white"):
+            self._image_surf = pygame.image.load("sprites/"+self.getKind()+"/white_"+self.getKind()+"20x20.png").convert_alpha()
+        elif(self.team == "black"):
+            self._image_surf = pygame.image.load("sprites/"+self.getKind()+"/white_"+self.getKind()+"20x20.png").convert_alpha()
+
+    def isActive(self):
+        return self.active
+
+    def avaliableMoves(self, pieces=None, map=None):
+        return [], []
+
+class Boat(GamePiece):
+    piece_name = "boat"
+    _image_path = "sprites/port/boat20x20.png"
+
+    def __init__(self, x, y, sailor):
+        self.x = x*STEP_SIZE
+        self.y = y*STEP_SIZE
+        self.sailor = sailor
+        self.team = sailor.getTeam()
+        self.multiplier = sailor.getMultiplier()
+        self._image_surf = pygame.image.load(self._image_path).convert_alpha()
+
+    def getSailorKind(self):
+        return self.sailor.getKind()
+
+    def getSailor(self):
+        self.sailor.setMultiplier(self.multiplier)
+
+        self.sailor.moveTo((self.x, self.y))
+        return self.sailor
+
+    def avaliableMoves(self, pieces, map):
+        moves = []
+        self.captures = []
+        lim = 5
+        moves.extend(self.movesInWater("east", map, pieces, lim))
+        moves.extend(self.movesInWater("west", map, pieces, lim))
+        moves.extend(self.movesInWater("north", map, pieces, lim))
+        moves.extend(self.movesInWater("south", map, pieces, lim))
+        moves.extend(self.movesInWater("northeast", map, pieces, lim))
+        moves.extend(self.movesInWater("northwest", map, pieces, lim))
+        moves.extend(self.movesInWater("southeast", map, pieces, lim))
+        moves.extend(self.movesInWater("southwest", map, pieces, lim))
+        return moves, self.captures
+
+    def draw(self, surface):
+        surface.blit(self.sailor._image_surf,(self.x,self.y))
+        surface.blit(self._image_surf,(self.x,self.y))

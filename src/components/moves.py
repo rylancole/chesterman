@@ -4,17 +4,18 @@ from components.pieces import *
 class LegalType:
 
     image_dict = {
-        "king": "sprites/green_king_20x20.png",
-        "queen": "sprites/green_queen_20x20.png",
-        "rook": "sprites/green_rook_20x20.png",
-        "knight": "sprites/green_knight_20x20.png",
-        "bishop": "sprites/green_bishop_20x20.png",
-        "pawn": "sprites/green_pawn_20x20.png",
-        "wall": "sprites/green_wall_20x20.png",
-        "north": "sprites/green_north_20x20.png",
-        "south": "sprites/green_south_20x20.png",
-        "east": "sprites/green_east_20x20.png",
-        "west": "sprites/green_west_20x20.png"
+        "king": "sprites/king/green_king20x20.png",
+        "queen": "sprites/queen/green_queen20x20.png",
+        "rook": "sprites/rook/green_rook20x20.png",
+        "knight": "sprites/knight/green_knight20x20.png",
+        "bishop": "sprites/bishop/green_bishop20x20.png",
+        "pawn": "sprites/pawn/green_pawn20x20.png",
+        "wall": "sprites/wall/green_wall_20x20.png",
+        "port": "sprites/port/green_port_20x20.png",
+        "north": "sprites/arrow/green_north_20x20.png",
+        "south": "sprites/arrow/green_south_20x20.png",
+        "east": "sprites/arrow/green_east_20x20.png",
+        "west": "sprites/arrow/green_west_20x20.png"
     }
     _image_surf = None
     piece = None
@@ -23,10 +24,10 @@ class LegalType:
         #store move coordinates in unit [SQpixels]
         self.x = coord[0]
         self.y = coord[1]
-        self._image_surf = pygame.image.load("sprites/block-green20x20.png").convert()
+        self._image_surf = pygame.image.load("sprites/arrow/move_border20x20.png").convert_alpha()
 
     def setImageSurf(self, choice):
-        self._image_surf = pygame.image.load(self.image_dict[choice]).convert()
+        self._image_surf = pygame.image.load(self.image_dict[choice]).convert_alpha()
 
     def getSQpixels(self):
         return (self.x, self.y)
@@ -79,6 +80,7 @@ class LegalDrop(LegalType):
         elif(choice == "knight"): self.piece = Knight(team, x, y)
         elif(choice == "pawn"): self.piece = Pawn(team, x, y)
         elif(choice == "wall"): self.piece = Wall("neutral", x, y)
+        elif(choice == "port"): self.piece = Port(team, x, y)
 
         self.setImageSurf(choice)
 
@@ -95,13 +97,14 @@ class LegalDrop(LegalType):
 class LegalCapture:
 
     image_dict = {
-        "king": "sprites/red_king_20x20.png",
-        "queen": "sprites/red_queen_20x20.png",
-        "rook": "sprites/red_rook_20x20.png",
-        "knight": "sprites/red_knight_20x20.png",
-        "bishop": "sprites/red_bishop_20x20.png",
-        "pawn": "sprites/red_pawn_20x20.png",
-        "wall": "sprites/red_wall_20x20.png"
+        "king": "sprites/king/red_king20x20.png",
+        "queen": "sprites/queen/red_queen20x20.png",
+        "rook": "sprites/rook/red_rook20x20.png",
+        "knight": "sprites/knight/red_knight20x20.png",
+        "bishop": "sprites/bishop/red_bishop20x20.png",
+        "pawn": "sprites/pawn/red_pawn20x20.png",
+        "wall": "sprites/wall/red_wall_20x20.png",
+        "boat": "sprites/port/red_boat20x20.png"
     }
 
     value_dict = {
@@ -118,7 +121,9 @@ class LegalCapture:
         self.x, self.y = piece.getSQpixels()
         self.piece_obj = piece
         self.kind = piece.getKind()
-        self._image_surf = pygame.image.load(self.image_dict[self.kind]).convert()
+        if(self.kind == "boat"):
+            self.kind = piece.getSailorKind()
+        self._image_surf = pygame.image.load(self.image_dict[self.kind]).convert_alpha()
 
     def getValue(self):
         return self.value_dict[self.kind]

@@ -81,7 +81,7 @@ class Scoreboard(Board):
 class ResourceBoard(Board):
 
     dict_list = [
-        "hay", "crop", "stone", "gold"
+        "hay", "crop", "lumber", "stone", "gold"
     ]
     dict = {}
 
@@ -94,7 +94,8 @@ class Map:
     }
 
     def __init__(self):
-        pass
+        self.h = 0
+        self.w = 0
 
     def decompress(self, f):
         '''
@@ -103,6 +104,7 @@ class Map:
         s = stone
         f = field
         c = crop
+        l = lumber
         e = empty
         t = castle
         '''
@@ -113,6 +115,11 @@ class Map:
                 if(c != "\n"):
                     self.matrix[i].append(c)
             i += 1
+        self.h = len(self.matrix)
+        if(self.h > 0):
+            self.w = len(self.matrix[0])
+        else:
+            self.w = 0
 
     def get(self, x, y, needFullWord=False):
         '''
@@ -124,10 +131,22 @@ class Map:
         dict = {
             "s": "stone",
             "f": "hay",
-            "c": "crop"
+            "c": "crop",
+            "l": "lumber",
+            "w": "water",
+            "a": "castle",
+            "b": "castle",
+            "e": "empty"
         }
 
         return dict[self.matrix[y][x]]
+
+    def has(self, x, y, inSquares=False):
+        if(not inSquares):
+            x = int(x/STEP_SIZE) #convert coords to units [Squares]
+            y = int(y/STEP_SIZE)
+
+        return x < self.w and y < self.h
 
     def putCastle(self, team, x, y):
         '''

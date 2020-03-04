@@ -11,13 +11,6 @@ resource_list = [
     "empty", "empty",
     "empty", "empty", "empty"
     ]
-resource_list = [
-    "stone", "stone",
-    "field", "field",
-    "crop", "crop",
-    "empty", "empty",
-    "empty", "empty", "empty"
-    ]
 
 CHUNK_SIZE = 4
 
@@ -245,5 +238,5 @@ if __name__ == "__main__" :
     map = ChunkMap(w, h, 20)
     map.makeIsland(int(w*CHUNK_SIZE/2), int(h*CHUNK_SIZE/2), 75)
     map.print()
-    map.saveAsPNG("../maps/map1.png")
-    map.saveAsTxt("../maps/map1.txt")
+    map.saveAsPNG()
+    map.saveAsTxt()
